@@ -1,4 +1,4 @@
 *~
 .DS_Store
-docker-compose.override.example.yml
+docker-compose.override.yml
 __pycache__
