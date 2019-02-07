@@ -1,56 +1,61 @@
-import os
-import tempfile
+# -*- coding: utf-8 -*-
+"""Defines fixtures available to all tests."""
 
 import pytest
-from web import create_app
-from web.db import get_db, init_db
+from webtest import TestApp
 
-with open(os.path.join(os.path.dirname(__file__), 'data.sql'), 'rb') as f:
-    _data_sql = f.read().decode('utf8')
+from conduit.app import create_app
+from conduit.database import db as _db
+from conduit.settings import TestConfig
+from conduit.profile.models import UserProfile
 
 
-@pytest.fixture
+from .factories import UserFactory
+
+
+@pytest.yield_fixture(scope='function')
 def app():
-    db_fd, db_path = tempfile.mkstemp()
+    """An application for the tests."""
+    _app = create_app(TestConfig)
 
-    app = create_app({
-        'TESTING': True,
-        'DATABASE': db_path,
-    })
+    with _app.app_context():
+        _db.create_all()
 
+    ctx = _app.test_request_context()
+    ctx.push()
+
+    yield _app
+
+    ctx.pop()
+
+
+@pytest.fixture(scope='function')
+def testapp(app):
+    """A Webtest app."""
+    return TestApp(app)
+
+
+@pytest.yield_fixture(scope='function')
+def db(app):
+    """A database for the tests."""
+    _db.app = app
     with app.app_context():
-        init_db()
-        get_db().executescript(_data_sql)
+        _db.create_all()
 
-    yield app
+    yield _db
 
-    os.close(db_fd)
-    os.unlink(db_path)
-
-
-@pytest.fixture
-def client(app):
-    return app.test_client()
+    # Explicitly close DB connection
+    _db.session.close()
+    _db.drop_all()
 
 
 @pytest.fixture
-def runner(app):
-    return app.test_cli_runner()
-
-class AuthActions(object):
-    def __init__(self, client):
-        self._client = client
-
-    def login(self, username='test', password='test'):
-        return self._client.post(
-            '/auth/login',
-            data={'username': username, 'password': password}
-        )
-
-    def logout(self):
-        return self._client.get('/auth/logout')
-
-
-@pytest.fixture
-def auth(client):
-    return AuthActions(client)
+def user(db):
+    """A user for the tests."""
+    class User():
+        def get(self):
+            muser = UserFactory(password='myprecious')
+            UserProfile(muser).save()
+            db.session.commit()
+            return muser
+    return User()
