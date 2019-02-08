@@ -8,18 +8,19 @@ add the following to ``.bashrc`` or ``.bash_profile``.
 
     export CONDUIT_SECRET='something-really-secret'
 
+Use "cd" to get into this directory ::
+
+    cd tff
+
 Before running shell commands, set the ``FLASK_APP`` and ``FLASK_DEBUG``
 environment variables ::
 
-    export FLASK_APP=/path/to/autoapp.py
+    export FLASK_APP=autoapp.py
     export FLASK_DEBUG=1
 
 Then run the following commands to bootstrap your environment ::
 
-    git clone https://github.com/gothinkster/flask-realworld-example-app.git
-    cd flask-realworld-example-app
     pip install -r requirements/dev.txt
-
 
 Run the following commands to create your app's
 database tables and perform the initial migration ::

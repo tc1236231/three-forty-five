@@ -3,7 +3,7 @@
 from flask import Flask
 from conduit.extensions import bcrypt, cache, db, migrate, jwt, cors
 
-from conduit import commands, user, profile, articles
+from conduit import commands, user, profile, articles, blog
 from conduit.settings import ProdConfig
 from conduit.exceptions import InvalidUsage
 
@@ -14,7 +14,7 @@ def create_app(config_object=ProdConfig):
 
     :param config_object: The configuration object to use.
     """
-    app = Flask(__name__.split('.')[0])
+    app = Flask(__name__.split('.')[0], template_folder='../pages/templates', static_folder='../pages/static')
     app.url_map.strict_slashes = False
     app.config.from_object(config_object)
     register_extensions(app)
@@ -40,10 +40,12 @@ def register_blueprints(app):
     cors.init_app(user.views.blueprint, origins=origins)
     cors.init_app(profile.views.blueprint, origins=origins)
     cors.init_app(articles.views.blueprint, origins=origins)
+    cors.init_app(blog.views.blueprint, origins=origins)
 
     app.register_blueprint(user.views.blueprint)
     app.register_blueprint(profile.views.blueprint)
     app.register_blueprint(articles.views.blueprint)
+    app.register_blueprint(blog.views.blueprint)
 
 
 def register_errorhandlers(app):
