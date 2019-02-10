@@ -11,7 +11,7 @@ from conduit.exceptions import InvalidUsage
 from conduit.user.models import User
 from .models import Article, Tags, Comment
 from .serializers import (article_schema, articles_schema, comment_schema,
-                          comments_schema)
+                          comments_schema, tag_schema, tags_schema)
 
 blueprint = Blueprint('articles', __name__)
 
@@ -28,7 +28,7 @@ blueprint = Blueprint('articles', __name__)
 def get_articles(tag=None, author=None, favorited=None, limit=20, offset=0):
     res = Article.query
     if tag:
-        res = res.filter(Article.tagList.any(Tags.tagname == tag))
+        res = res.filter(Article.tagList.any(Tags.name == tag))
     if author:
         res = res.join(Article.author).join(User).filter(User.username == author)
     if favorited:
@@ -37,15 +37,18 @@ def get_articles(tag=None, author=None, favorited=None, limit=20, offset=0):
 
 
 @blueprint.route('/api/articles', methods=('POST',))
-@jwt_required
+@jwt_optional
 @use_kwargs(article_schema)
 @marshal_with(article_schema)
-def make_article(body, title, description, tagList=None):
-    article = Article(title=title, description=description, body=body,
-                      author=current_user.profile)
+def make_article(filePath, title, description, author, tagList=None):
+    article = Article(title=title, description=description, filePath=filePath,
+                      author=author)
+    existing_article = Article.query.filter_by(slug=article.slug).first()
+    if existing_article is not None:
+        raise InvalidUsage.article_already_exist()
     if tagList is not None:
         for tag in tagList:
-            mtag = Tags.query.filter_by(tagname=tag).first()
+            mtag = Tags.query.filter_by(name=tag).first()
             if not mtag:
                 mtag = Tags(tag)
                 mtag.save()
@@ -68,9 +71,9 @@ def update_article(slug, **kwargs):
 
 
 @blueprint.route('/api/articles/<slug>', methods=('DELETE',))
-@jwt_required
+@jwt_optional
 def delete_article(slug):
-    article = Article.query.filter_by(slug=slug, author_id=current_user.profile.id).first()
+    article = Article.query.filter_by(slug=slug).first()
     article.delete()
     return '', 200
 
@@ -125,8 +128,27 @@ def articles_feed(limit=20, offset=0):
 ######
 
 @blueprint.route('/api/tags', methods=('GET',))
-def get_tags():
-    return jsonify({'tags': [tag.tagname for tag in Tags.query.all()]})
+@use_kwargs({'featuredOnly': fields.Boolean(), 'limit': fields.Int()})
+@marshal_with(tags_schema)
+def get_tags(featuredOnly=False, limit=None):
+    res = Tags.query
+    if featuredOnly:
+        res = res.filter(Tags.featured)
+    if limit:
+        res = res.limit(limit)
+    return res.all()
+
+
+@blueprint.route('/api/tags/feature', methods=('POST',))
+@use_kwargs({'name': fields.Str()})
+@marshal_with(tag_schema)
+def feature_a_tag(name):
+    tag = Tags.query.filter(Tags.name == name).first()
+    if not tag:
+        raise InvalidUsage.tag_not_found()
+    tag.update(featured=True)
+    tag.save()
+    return tag
 
 
 ##########

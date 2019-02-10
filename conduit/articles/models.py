@@ -22,13 +22,14 @@ class Tags(Model):
     __tablename__ = 'tags'
 
     id = db.Column(db.Integer, primary_key=True)
-    tagname = db.Column(db.String(100))
+    name = db.Column(db.String(100))
+    featured = db.Column(db.Boolean)
 
-    def __init__(self, tagname):
-        db.Model.__init__(self, tagname=tagname)
+    def __init__(self, name):
+        db.Model.__init__(self, name=name, featured=False)
 
     def __repr__(self):
-        return self.tagname
+        return self.name
 
 
 class Comment(Model, SurrogatePK):
@@ -54,10 +55,10 @@ class Article(SurrogatePK, Model):
     title = Column(db.String(100), nullable=False)
     description = Column(db.Text, nullable=False)
     body = Column(db.Text)
+    filePath = Column(db.String(255))
     createdAt = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     updatedAt = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
-    author_id = reference_col('userprofile', nullable=False)
-    author = relationship('UserProfile', backref=db.backref('articles'))
+    author = Column(db.String(100))
     favoriters = relationship(
         'UserProfile',
         secondary=favoriter_assoc,
@@ -69,8 +70,8 @@ class Article(SurrogatePK, Model):
 
     comments = relationship('Comment', backref=db.backref('article'), lazy='dynamic')
 
-    def __init__(self, author, title, body, description, slug=None, **kwargs):
-        db.Model.__init__(self, author=author, title=title, description=description, body=body,
+    def __init__(self, author, title, description, slug=None, **kwargs):
+        db.Model.__init__(self, author=author, title=title, description=description,
                           slug=slug or slugify(title), **kwargs)
 
     def favourite(self, profile):

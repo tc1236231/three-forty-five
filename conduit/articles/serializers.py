@@ -6,7 +6,22 @@ from conduit.profile.serializers import ProfileSchema
 
 
 class TagSchema(Schema):
-    tagname = fields.Str()
+    name = fields.Str()
+    featured = fields.Boolean()
+
+    @post_dump()
+    def dump_tag(self, data):
+        return {'tag': data}
+
+    class Meta:
+        strict = True
+
+
+class TagsSchema(TagSchema):
+
+    @post_dump(pass_many=True)
+    def dump_tags(self, data, many):
+        return {'tags': data, 'tagsCount': len(data)}
 
 
 class ArticleSchema(Schema):
@@ -15,8 +30,9 @@ class ArticleSchema(Schema):
     description = fields.Str()
     createdAt = fields.DateTime()
     body = fields.Str()
+    filePath = fields.Str()
     updatedAt = fields.DateTime(dump_only=True)
-    author = fields.Nested(ProfileSchema)
+    author = fields.Str()
     article = fields.Nested('self', exclude=('article',), default=True, load_only=True)
     tagList = fields.List(fields.Str())
     favoritesCount = fields.Int(dump_only=True)
@@ -28,7 +44,6 @@ class ArticleSchema(Schema):
 
     @post_dump
     def dump_article(self, data):
-        data['author'] = data['author']['profile']
         return {'article': data}
 
     class Meta:
@@ -39,7 +54,6 @@ class ArticleSchemas(ArticleSchema):
 
     @post_dump
     def dump_article(self, data):
-        data['author'] = data['author']['profile']
         return data
 
     @post_dump(pass_many=True)
@@ -86,3 +100,5 @@ article_schema = ArticleSchema()
 articles_schema = ArticleSchemas(many=True)
 comment_schema = CommentSchema()
 comments_schema = CommentsSchema(many=True)
+tag_schema = TagSchema()
+tags_schema = TagsSchema(many=True)
