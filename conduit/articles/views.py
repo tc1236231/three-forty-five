@@ -23,9 +23,9 @@ blueprint = Blueprint('articles', __name__)
 @blueprint.route('/api/articles', methods=('GET',))
 @jwt_optional
 @use_kwargs({'tag': fields.Str(), 'author': fields.Str(),
-             'favorited': fields.Str(), 'limit': fields.Int(), 'offset': fields.Int()})
+             'favorited': fields.Str(), 'featured': fields.Boolean(), 'latest': fields.Boolean(), 'limit': fields.Int(), 'offset': fields.Int()})
 @marshal_with(articles_schema)
-def get_articles(tag=None, author=None, favorited=None, limit=20, offset=0):
+def get_articles(tag=None, author=None, favorited=None, featured=None, latest=None, limit=20, offset=0):
     res = Article.query
     if tag:
         res = res.filter(Article.tagList.any(Tags.name == tag))
@@ -33,6 +33,10 @@ def get_articles(tag=None, author=None, favorited=None, limit=20, offset=0):
         res = res.join(Article.author).join(User).filter(User.username == author)
     if favorited:
         res = res.join(Article.favoriters).filter(User.username == favorited)
+    if featured:
+        res = res.filter(Article.featured == featured)
+    if latest:
+        res = res.order_by(Article.createdAt.desc())
     return res.offset(offset).limit(limit).all()
 
 
@@ -40,9 +44,9 @@ def get_articles(tag=None, author=None, favorited=None, limit=20, offset=0):
 @jwt_optional
 @use_kwargs(article_schema)
 @marshal_with(article_schema)
-def make_article(filePath, title, description, author, tagList=None):
+def make_article(filePath, title, description, author, tagList=None, featured=False):
     article = Article(title=title, description=description, filePath=filePath,
-                      author=author)
+                      author=author, featured=featured)
     existing_article = Article.query.filter_by(slug=article.slug).first()
     if existing_article is not None:
         raise InvalidUsage.article_already_exist()

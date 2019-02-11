@@ -19,6 +19,10 @@ class TagSchema(Schema):
 
 class TagsSchema(TagSchema):
 
+    @post_dump
+    def dump_tag(self, data):
+        return data
+
     @post_dump(pass_many=True)
     def dump_tags(self, data, many):
         return {'tags': data, 'tagsCount': len(data)}
@@ -37,6 +41,7 @@ class ArticleSchema(Schema):
     tagList = fields.List(fields.Str())
     favoritesCount = fields.Int(dump_only=True)
     favorited = fields.Bool(dump_only=True)
+    featured = fields.Boolean()
 
     @pre_load
     def make_article(self, data):

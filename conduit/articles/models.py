@@ -59,6 +59,7 @@ class Article(SurrogatePK, Model):
     createdAt = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     updatedAt = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     author = Column(db.String(100))
+    featured = Column(db.Boolean, default=False)
     favoriters = relationship(
         'UserProfile',
         secondary=favoriter_assoc,
