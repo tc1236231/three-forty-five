@@ -1,5 +1,6 @@
 import csv
-from sqlalchemy import (create_engine, Column, Integer, String, Float, text)
+from sqlalchemy import (create_engine, Column, Integer, String, Float, 
+                        DateTime)
 from sqlalchemy.sql.expression import (func, select)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -82,18 +83,20 @@ class att_aggregate(Base):
         return "<att_aggregate(id='%d', group_on='%s', ticket_ct='%d', revenue='%f')>" % (
                 self.id, self.group_on, self.ticket_ct, self.revenue)
         
-    def cat_price_aggregate(self):
-        Session = sessionmaker(bind=engine)
-        session = Session()
-        connection = engine.connect()
-    
+    def cat_price_group(self):
         query = select([attendance.perf_type_desc,
                         attendance.price_type_desc,
                         func.count(attendance.sli_no), 
                         func.sum(attendance.paid_amt)]
                         ).group_by('perf_type_desc','price_type_desc')
+        return query
         
-        results = connection.execute(query)
+    def aggregate(self, query_obj):
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        connection = engine.connect()
+        
+        results = connection.execute(query_obj)
         
         for result in results:
             group_on_str = ''
@@ -160,7 +163,8 @@ def main():
     session.commit()
     
     test = att_aggregate()
-    test.cat_price_aggregate()
+    test_query = test.cat_price_group()
+    test_aggregate = test.aggregate(test_query)
     
     print(session.query(select([att_aggregate.group_on, att_aggregate.ticket_ct, att_aggregate.revenue])).all())
         
