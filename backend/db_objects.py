@@ -1,15 +1,58 @@
 import csv
+import datetime
 from sqlalchemy import (create_engine, Column, Integer, String, Float, 
-                        DateTime)
-from sqlalchemy.sql.expression import (func, select)
+                        DateTime, Date)
+from sqlalchemy.sql.expression import (func)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 engine = create_engine('sqlite:///:memory:', echo=False)
 Base = declarative_base()
 
-class attendance(Base):
-    __tablename__ = 'attendance'
+## Declare models
+class AttendanceReport(Base):
+    """
+    ===========================================================================
+    An attendance count by site, ticket category, and day (as the current 
+    smallest unit of measure in time that the organization can accomodate with
+    the whole of our data).
+    ===========================================================================
+    """
+    __tablename__ = 'attendance_report'
+    
+    id = Column(Integer, primary_key=True)
+    site_code = Column(String)
+    category = Column(String) # Ticket category.
+    date = Column(Date)
+    count = Column(Integer)
+    revenue = Column(Float)
+    
+    def __repr__(self):
+        try:
+            result = """<AttendanceReport(id='%d', 
+                                        site_code='%s', 
+                                        category='%s',
+                                        date='%s',
+                                        count='%d',
+                                        revenue='%f')>""" % (self.id,
+                                                             self.site_code,
+                                                             self.category,
+                                                             self.date,
+                                                             self.count,
+                                                             self.revenue)
+        except TypeError:
+            result = 'No results'
+        return result
+    
+class TessAttendance(Base):
+    """
+    ===========================================================================
+    A log of every event attendance event recorded in T_SUB_LINEITEM in the
+    Tessitura database, with appropriate transformations to fit our business
+    rules.
+    ===========================================================================
+    """    
+    __tablename__ = 'tess_attendance'
     
     id = Column(Integer, primary_key=True)
     sli_no = Column(Integer)
@@ -18,8 +61,8 @@ class attendance(Base):
     price_type_desc = Column(String)
     price_type_short_desc = Column(String)
     sli_status_desc = Column(String)
-    perf_dt = Column(String)
-    order_dt = Column(String)
+    perf_dt = Column(DateTime)
+    order_dt = Column(DateTime)
     price_type_category_desc = Column(String)
     price_type_category_short_desc = Column(String)
     perf_desc = Column(String)
@@ -32,7 +75,7 @@ class attendance(Base):
     gl_account_no = Column(String)
     
     def __repr__(self):
-        result = """<attendance(id='%d',
+        result = """<TessAttendance(id='%d',
                                 sli_no='%d',
                                 paid_amt='%f', 
                                 order_no='%d', 
@@ -70,47 +113,58 @@ class attendance(Base):
                                                            self.site_code, 
                                                            self.gl_account_no)
         return result
-
-class att_aggregate(Base):
-    __tablename__ = 'att_aggregate'
     
-    id = Column(Integer, primary_key=True)
-    group_on = Column(String)
-    ticket_ct = Column(Integer)
-    revenue = Column(Float)
+    @classmethod
+    def daily_attendance_report(cls, session, date):
+        """
+        =======================================================================
+        Return an attendance report for a given day. 
+        =======================================================================
+        """
+        try: ## BI-54: Update this so it can handle date inputs better.
+            date_obj = datetime.datetime.strptime(date, '%m/%d/%Y')
+        except ValueError:
+            print('Improperly formatted date, date must be MM/DD/YYYY')
+            return
+        else:
+            date_param = date_obj.strftime('%Y-%m-%d')
+        result = (
+                session
+                .query(cls.site_code,
+                       cls.perf_dt,                           
+                       cls.price_type_category_desc,
+                       func.count(cls.sli_no),
+                       func.sum(cls.paid_amt))
+                .filter(func.date(cls.perf_dt) == date_param)
+                .group_by(cls.site_code, 
+                          func.date(cls.perf_dt),
+                          cls.price_type_category_desc)
+                .all()
+                )
+        return [
+                AttendanceReport(
+                        site_code=site_code,
+                        category=category,
+                        date=date,
+                        count=count,
+                        revenue=total)
+                for site_code, date, category, count, total in result
+                ]
+
+def test_db_objects():
+    """
+    ===========================================================================
+    Used to test the objects outlined above, in lieu of a formal unit testing
+    procedure.
+    ===========================================================================
+    """    
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
     
-    def __repr__(self):
-        return "<att_aggregate(id='%d', group_on='%s', ticket_ct='%d', revenue='%f')>" % (
-                self.id, self.group_on, self.ticket_ct, self.revenue)
-        
-    def cat_price_group(self):
-        query = select([attendance.perf_type_desc,
-                        attendance.price_type_desc,
-                        func.count(attendance.sli_no), 
-                        func.sum(attendance.paid_amt)]
-                        ).group_by('perf_type_desc','price_type_desc')
-        return query
-        
-    def aggregate(self, query_obj):
-        Session = sessionmaker(bind=engine)
-        session = Session()
-        connection = engine.connect()
-        
-        results = connection.execute(query_obj)
-        
-        for result in results:
-            group_on_str = ''
-            for group_val in result[:-2]:
-                group_on_str = group_on_str + str(group_val) + '&'
-            group_on_str = group_on_str[:-1]
-            row = att_aggregate(group_on=group_on_str, ticket_ct=result[-2], revenue=result[-1])
-            session.add(row)
-            
-        session.commit()
-
-Base.metadata.create_all(engine)
-
-def main():
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    
+    # Load the static dataset for testing.
     with open('tess_orders.csv', 'r') as o:
         dr = csv.DictReader(o)
         to_db = [(i['sli_no'],
@@ -132,21 +186,21 @@ def main():
                   i['site_code'],
                   i['gl_account_no']) for i in dr]
     
-    some_rows = to_db[0:12]
+    # Get only the first 100 rows, for the sake of speed.
+    some_rows = to_db[0:100]
     
-        
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    
-    for data in some_rows:  
-        session.add(attendance(sli_no=data[0],
+    # Add 100 rows to TessAttendance.
+    for data in some_rows:
+        session.add(TessAttendance(sli_no=data[0],
                                paid_amt=data[1],
                                order_no=data[2],
                                price_type_desc=data[3],
                                price_type_short_desc=data[4],
                                sli_status_desc=data[5],
-                               perf_dt=data[6],
-                               order_dt=data[7],
+                               perf_dt=datetime.datetime.strptime(data[6],
+                                    '%m/%d/%Y %H:%M'),
+                               order_dt=datetime.datetime.strptime(data[7],
+                                    '%m/%d/%Y %H:%M'),
                                price_type_category_desc=data[8],
                                price_type_category_short_desc=data[9],
                                perf_desc=data[10],
@@ -161,24 +215,31 @@ def main():
         )   
     
     session.commit()
+
+    ## Test daily_attendance_report against a picked day.
+    session.add_all(TessAttendance.daily_attendance_report(session, 
+                                                           '3/19/2016'))
     
-    test = att_aggregate()
-    test_query = test.cat_price_group()
-    test_aggregate = test.aggregate(test_query)
+    session.commit()
     
-    print(session.query(select([att_aggregate.group_on, att_aggregate.ticket_ct, att_aggregate.revenue])).all())
+    results = session.query(AttendanceReport).all()
+    
+    ## Check the results of TessAttendance.daily_attendance_report for 3/19/2016.
+    ## There should be 3 row results (1 for each price type on that day), with
+    ## the following breakdown of count and revenue:
+    expected_agg_result = [[2, 0.0], [3, 12.0], [46, 276.0]]
+    
+    ## Compare expectation with results:
+    test_result = [False, False, False]
+    
+    for i, agg_result in enumerate(expected_agg_result):
+        if (expected_agg_result[i][0] == results[i].count and
+            expected_agg_result[i][1] == results[i].revenue):
+                test_result[i] = True
+                
+    return test_result
         
-    #session.query().all()
     
-#    session.add(attendance(sli_no=1))    
-#    
-#    for instance in session.query(attendance).order_by(attendance.id).filter_by(id<6):
-#        print(instance.name, instance.sli_no)
-#    
-#    for id, in session.query(attendance.id).filter_by(text("id<6")):
-#        print(id)
-    
-    return to_db, some_rows
-        
 if __name__ == '__main__':
-    raw_data, raw_rows = main()
+    print(test_db_objects())
+
