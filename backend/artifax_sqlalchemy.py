@@ -28,20 +28,17 @@ class AttendanceReport(Base):
     revenue = Column(Float)
     
     def __repr__(self):
-        try:
-            result = """<AttendanceReport(id='%d', 
-                                        site_code='%s', 
-                                        category='%s',
-                                        date='%s',
-                                        count='%d',
-                                        revenue='%f')>""" % (self.id,
-                                                             self.site_code,
-                                                             self.category,
-                                                             self.date,
-                                                             self.count,
-                                                             self.revenue)
-        except TypeError:
-            result = 'No results'
+        result = """<AttendanceReport(id='%d', 
+                                    site_code='%s', 
+                                    category='%s',
+                                    date='%s',
+                                    count='%d',
+                                    revenue='%f')>""" % (self.id,
+                                                         self.site_code,
+                                                         self.category,
+                                                         self.date,
+                                                         self.count,
+                                                         self.revenue)
         return result
     
 class ArtifaxAttendance(Base):
@@ -98,22 +95,19 @@ class ArtifaxAttendance(Base):
         the Artifax CSV files are going to look like going forward.
         =======================================================================
         """        
-        try:
-            with open(file_name, 'r') as o:
-                dr = csv.DictReader(o)
-                to_db = [(i['revenue'],
-                          i['attendance'],
-                          i['price_type_desc'],
-                          i['attendance_dt'],
-                          i['price_type_category_desc'],
-                          i['program_attended'],
-                          i['perf_type_desc'],
-                          i['season_fy'],
-                          i['site_code']) for i in dr]
-        except:
-            print('Could not open file, check path and/or file contents.')
-            return
-        
+
+        with open(file_name, 'r') as o:
+            dr = csv.DictReader(o)
+            to_db = [(i['revenue'],
+                      i['attendance'],
+                      i['price_type_desc'],
+                      i['attendance_dt'],
+                      i['price_type_category_desc'],
+                      i['program_attended'],
+                      i['perf_type_desc'],
+                      i['season_fy'],
+                      i['site_code']) for i in dr]
+
         for data in to_db:
             session.add(ArtifaxAttendance(revenue=data[0],
                                    attendance=data[1],
@@ -127,7 +121,7 @@ class ArtifaxAttendance(Base):
                                    site_code=data[8],
                                    )    
             )   
-    
+
         session.commit()
     
     @classmethod
@@ -137,13 +131,10 @@ class ArtifaxAttendance(Base):
         Return an attendance report for a given day. 
         =======================================================================
         """
-        try: ## BI-54: Update this so it can handle date inputs better.
-            date_obj = datetime.datetime.strptime(date, '%m/%d/%Y')
-        except ValueError:
-            print('Improperly formatted date, date must be MM/DD/YYYY')
-            return
-        else:
-            date_param = date_obj.strftime('%Y-%m-%d')
+        ## BI-54: Update this so it can handle date inputs better.
+        date_obj = datetime.datetime.strptime(date, '%m/%d/%Y')
+
+        date_param = date_obj.strftime('%Y-%m-%d')
         result = (
                 session
                 .query(cls.site_code,

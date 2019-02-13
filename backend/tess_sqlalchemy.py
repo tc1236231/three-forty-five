@@ -28,20 +28,17 @@ class AttendanceReport(Base):
     revenue = Column(Float)
     
     def __repr__(self):
-        try:
-            result = """<AttendanceReport(id='%d', 
-                                        site_code='%s', 
-                                        category='%s',
-                                        date='%s',
-                                        count='%d',
-                                        revenue='%f')>""" % (self.id,
-                                                             self.site_code,
-                                                             self.category,
-                                                             self.date,
-                                                             self.count,
-                                                             self.revenue)
-        except TypeError:
-            result = 'No results'
+        result = """<AttendanceReport(id='%d', 
+                                    site_code='%s', 
+                                    category='%s',
+                                    date='%s',
+                                    count='%d',
+                                    revenue='%f')>""" % (self.id,
+                                                         self.site_code,
+                                                         self.category,
+                                                         self.date,
+                                                         self.count,
+                                                         self.revenue)
         return result
     
 class TessAttendance(Base):
@@ -125,30 +122,27 @@ class TessAttendance(Base):
         the Tessitura CSV files are going to look like going forward.
         =======================================================================
         """        
-        try:
-            with open(file_name, 'r') as o:
-                dr = csv.DictReader(o)
-                to_db = [(i['sli_no'],
-                          i['paid_amt'],
-                          i['order_no'],
-                          i['price_type_desc'],
-                          i['price_type_short_desc'],
-                          i['sli_status_desc'],
-                          i['perf_dt'],
-                          i['order_dt'],
-                          i['price_type_category_desc'],
-                          i['price_type_category_short_desc'],
-                          i['perf_desc'],
-                          i['prod_desc'],
-                          i['perf_type_desc'],
-                          i['season_desc'],
-                          i['season_fy'],
-                          i['mos_desc'],
-                          i['site_code'],
-                          i['gl_account_no']) for i in dr]
-        except:
-            print('Could not open file, check path and/or file contents.')
-            return
+
+        with open(file_name, 'r') as o:
+            dr = csv.DictReader(o)
+            to_db = [(i['sli_no'],
+                      i['paid_amt'],
+                      i['order_no'],
+                      i['price_type_desc'],
+                      i['price_type_short_desc'],
+                      i['sli_status_desc'],
+                      i['perf_dt'],
+                      i['order_dt'],
+                      i['price_type_category_desc'],
+                      i['price_type_category_short_desc'],
+                      i['perf_desc'],
+                      i['prod_desc'],
+                      i['perf_type_desc'],
+                      i['season_desc'],
+                      i['season_fy'],
+                      i['mos_desc'],
+                      i['site_code'],
+                      i['gl_account_no']) for i in dr]
         
         for data in to_db:
             session.add(TessAttendance(sli_no=data[0],
@@ -183,13 +177,10 @@ class TessAttendance(Base):
         Return an attendance report for a given day. 
         =======================================================================
         """
-        try: ## BI-54: Update this so it can handle date inputs better.
-            date_obj = datetime.datetime.strptime(date, '%m/%d/%Y')
-        except ValueError:
-            print('Improperly formatted date, date must be MM/DD/YYYY')
-            return
-        else:
-            date_param = date_obj.strftime('%Y-%m-%d')
+        ## BI-54: Update this so it can handle date inputs better.
+        date_obj = datetime.datetime.strptime(date, '%m/%d/%Y')
+        date_param = date_obj.strftime('%Y-%m-%d')
+        
         result = (
                 session
                 .query(cls.site_code,
