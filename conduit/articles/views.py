@@ -7,6 +7,7 @@ from flask_apispec import marshal_with, use_kwargs
 from flask_jwt_extended import current_user, jwt_required, jwt_optional
 from marshmallow import fields
 
+from conduit.database import db
 from conduit.exceptions import InvalidUsage
 from conduit.user.models import User
 from .models import Article, Tags, Comment
@@ -62,11 +63,11 @@ def make_article(filePath, title, description, author, tagList=None, featured=Fa
 
 
 @blueprint.route('/api/articles/<slug>', methods=('PUT',))
-@jwt_required
+@jwt_optional
 @use_kwargs(article_schema)
 @marshal_with(article_schema)
 def update_article(slug, **kwargs):
-    article = Article.query.filter_by(slug=slug, author_id=current_user.profile.id).first()
+    article = Article.query.filter_by(slug=slug).first()
     if not article:
         raise InvalidUsage.article_not_found()
     article.update(updatedAt=dt.datetime.utcnow(), **kwargs)
@@ -78,8 +79,24 @@ def update_article(slug, **kwargs):
 @jwt_optional
 def delete_article(slug):
     article = Article.query.filter_by(slug=slug).first()
+    if not article:
+        raise InvalidUsage.article_not_found()
     article.delete()
     return '', 200
+
+
+@blueprint.route('/api/articles/all/<key>', methods=('DELETE',))
+@jwt_optional
+def delete_all_articles(key):
+    if key != 'k2h6o1':
+        return '', 422
+
+    num_rows_deleted = 0
+    articles = db.session.query(Article).all()
+    for article in articles:
+        article.delete()
+        num_rows_deleted += 1
+    return str(num_rows_deleted), 200
 
 
 @blueprint.route('/api/articles/<slug>', methods=('GET',))

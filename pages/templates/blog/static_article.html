@@ -2,14 +2,21 @@
 {% block main %}
     <div class="blog-post">
         <h2 class="blog-post-title">{{ articleJson.title }}</h2>
-        <p class="blog-post-meta">{{ articleJson.createdAt | datetime }} by <a href="#">{{ articleJson.author }}</a></p>
+        <p class="blog-post-meta">{{ articleJson.createdAt | datetime }} by <a href="#">{{ articleJson.author }}</a>
+            <br />
+            <fonts>Tags:
+            {% for x in articleJson.tagList %}
+              {{ x }}
+            {% endfor %}
+        </fonts>
+        </p>
 
         <p>{{ articleJson.description }}</p>
         <hr>
         <div id="iframe-div" class="embed-responsive embed-responsive-16by9 shadow border border-primary rounded">
          <iframe class="embed-responsive-item"
                  onload="document.getElementById('iframe-div').style.height=(this.contentDocument.body.scrollHeight+45) +'px';"
-                 scrolling="no" src="{{ url_for('static', filename='notebooks/' + articleJson.filePath ) }}">
+                 scrolling="no" src="{{ url_for('static', filename= articleJson.filePath ) }}">
          </iframe>
         </div>
     </div><!-- /.blog-post -->

@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, flash
+from flask import Blueprint, render_template, flash, current_app, Markup
 from conduit.articles.views import get_tags, get_article, get_articles
 from conduit.exceptions import InvalidUsage
 from babel.dates import format_datetime
 from dateutil import parser
+from markdown import markdown
 
 blueprint = Blueprint('blog', __name__)
 
@@ -29,11 +30,9 @@ def unique_json(json, key):
 def index():
     featured_articles_response = get_articles(featured=True, latest=True, limit=2)
     latest_articles_response = get_articles(latest=True, limit=4)
-    print(latest_articles_response.json)
     if featured_articles_response.status_code == 200 and latest_articles_response.status_code == 200:
         featured_articles_json = featured_articles_response.json['articles']
         latest_articles_json = unique_json(latest_articles_response.json['articles'] + featured_articles_json, 'slug')
-        print(latest_articles_json)
         return render_blog('blog/index.html', featured_articles_json=featured_articles_json, latest_articles_json=latest_articles_json)
     else:
         raise InvalidUsage('Failed to retrieve articles', status_code=featured_articles_response.status_code)
@@ -47,7 +46,15 @@ def view_article(slug):
         if articleJson['filePath'] == "":
             return render_blog('blog/article.html', articleJson=articleJson)
         else:
-            return render_blog('blog/static_article.html', articleJson=articleJson)
+            file_path = str(articleJson['filePath'])
+            if file_path[-3:] == ".md" or file_path[-3:] == ".MD":
+                with current_app.open_resource("../pages/static/" + file_path) as f:
+                    content = f.read()
+                    articleJson['body'] = markdown(content.decode("utf-8"))
+                    print(articleJson['body'])
+                return render_blog('blog/article.html', articleJson=articleJson)
+            else:
+                return render_blog('blog/static_article.html', articleJson=articleJson)
     else:
         raise InvalidUsage('Failed to get article information', status_code=article.status_code)
 
