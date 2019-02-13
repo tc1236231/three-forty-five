@@ -213,7 +213,7 @@ class TessAttendance(Base):
                 for site_code, date, category, count, total in result
                 ]
 
-def test_db_objects():
+def test_tess_objects():
     """
     ===========================================================================
     Used to test the objects outlined above, in lieu of a formal unit testing
@@ -254,5 +254,5 @@ def test_db_objects():
         
     
 if __name__ == '__main__':
-    print(test_db_objects())
+    print(test_tess_objects())
 
