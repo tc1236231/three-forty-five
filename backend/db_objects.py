@@ -115,6 +115,68 @@ class TessAttendance(Base):
         return result
     
     @classmethod
+    def import_csv(cls, session, file_name):
+        """
+        =======================================================================
+        Imports a properly formatted csv file into TessAttendance.
+        
+        Currently this is configured to match the tess_orders.csvs in this
+        feature branch. It will need to be re-jiggered once we know what 
+        the Tessitura CSV files are going to look like going forward.
+        =======================================================================
+        """        
+        try:
+            with open(file_name, 'r') as o:
+                dr = csv.DictReader(o)
+                to_db = [(i['sli_no'],
+                          i['paid_amt'],
+                          i['order_no'],
+                          i['price_type_desc'],
+                          i['price_type_short_desc'],
+                          i['sli_status_desc'],
+                          i['perf_dt'],
+                          i['order_dt'],
+                          i['price_type_category_desc'],
+                          i['price_type_category_short_desc'],
+                          i['perf_desc'],
+                          i['prod_desc'],
+                          i['perf_type_desc'],
+                          i['season_desc'],
+                          i['season_fy'],
+                          i['mos_desc'],
+                          i['site_code'],
+                          i['gl_account_no']) for i in dr]
+        except:
+            print('Could not open file, check path and/or file contents.')
+            return
+        
+        for data in to_db:
+            session.add(TessAttendance(sli_no=data[0],
+                                   paid_amt=data[1],
+                                   order_no=data[2],
+                                   price_type_desc=data[3],
+                                   price_type_short_desc=data[4],
+                                   sli_status_desc=data[5],
+                                   perf_dt=datetime.datetime.strptime(data[6],
+                                        '%m/%d/%Y %H:%M'),
+                                   order_dt=datetime.datetime.strptime(data[7],
+                                        '%m/%d/%Y %H:%M'),
+                                   price_type_category_desc=data[8],
+                                   price_type_category_short_desc=data[9],
+                                   perf_desc=data[10],
+                                   prod_desc=data[11],
+                                   perf_type_desc=data[12],
+                                   season_desc=data[13],
+                                   season_fy=data[14],
+                                   mos_desc=data[15],
+                                   site_code=data[16],
+                                   gl_account_no=data[17]
+                                   )    
+            )   
+    
+        session.commit()
+    
+    @classmethod
     def daily_attendance_report(cls, session, date):
         """
         =======================================================================
@@ -165,56 +227,7 @@ def test_db_objects():
     session = Session()
     
     # Load the static dataset for testing.
-    with open('tess_orders.csv', 'r') as o:
-        dr = csv.DictReader(o)
-        to_db = [(i['sli_no'],
-                  i['paid_amt'],
-                  i['order_no'],
-                  i['price_type_desc'],
-                  i['price_type_short_desc'],
-                  i['sli_status_desc'],
-                  i['perf_dt'],
-                  i['order_dt'],
-                  i['price_type_category_desc'],
-                  i['price_type_category_short_desc'],
-                  i['perf_desc'],
-                  i['prod_desc'],
-                  i['perf_type_desc'],
-                  i['season_desc'],
-                  i['season_fy'],
-                  i['mos_desc'],
-                  i['site_code'],
-                  i['gl_account_no']) for i in dr]
-    
-    # Get only the first 100 rows, for the sake of speed.
-    some_rows = to_db[0:100]
-    
-    # Add 100 rows to TessAttendance.
-    for data in some_rows:
-        session.add(TessAttendance(sli_no=data[0],
-                               paid_amt=data[1],
-                               order_no=data[2],
-                               price_type_desc=data[3],
-                               price_type_short_desc=data[4],
-                               sli_status_desc=data[5],
-                               perf_dt=datetime.datetime.strptime(data[6],
-                                    '%m/%d/%Y %H:%M'),
-                               order_dt=datetime.datetime.strptime(data[7],
-                                    '%m/%d/%Y %H:%M'),
-                               price_type_category_desc=data[8],
-                               price_type_category_short_desc=data[9],
-                               perf_desc=data[10],
-                               prod_desc=data[11],
-                               perf_type_desc=data[12],
-                               season_desc=data[13],
-                               season_fy=data[14],
-                               mos_desc=data[15],
-                               site_code=data[16],
-                               gl_account_no=data[17]
-                               )    
-        )   
-    
-    session.commit()
+    TessAttendance.import_csv(session, 'tess_orders100.csv')
 
     ## Test daily_attendance_report against a picked day.
     session.add_all(TessAttendance.daily_attendance_report(session, 
