@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, flash, current_app, Markup
+from flask import Blueprint, render_template, flash, current_app
 from conduit.articles.views import get_tags, get_article, get_articles
 from conduit.exceptions import InvalidUsage
 from babel.dates import format_datetime
@@ -51,7 +51,6 @@ def view_article(slug):
                 with current_app.open_resource("../pages/static/" + file_path) as f:
                     content = f.read()
                     articleJson['body'] = markdown(content.decode("utf-8"))
-                    print(articleJson['body'])
                 return render_blog('blog/article.html', articleJson=articleJson)
             else:
                 return render_blog('blog/static_article.html', articleJson=articleJson)
