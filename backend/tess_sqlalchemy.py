@@ -22,12 +22,15 @@ class SubLineitem(Base):
     create_dt = Column(DateTime)
     last_update_dt = Column(DateTime)
     sli_status_id = Column(Integer, ForeignKey('sli_statuses.id'))
-    perf_no = Column(Integer)
-    original_price_type = Column(Integer)
+    perf_no = Column(Integer, ForeignKey('perf.id'))
+    original_price_type_id = Column(Integer)
     
     ## Relationships:
     sli_statuses = relationship('SLIStatuses', back_populates='sub_lineitem')
-    price_types = relationship('PriceTypes', back_populates='sub_lineitem')
+    price_types = relationship('PriceTypes', 
+                               back_populates='sub_lineitem')
+    perf = relationship('Perf', 
+                        back_populates='sub_lineitem')
     
     def __repr__(self):
         return "<SubLineitem(id='%d')>" % (self.id)
@@ -38,7 +41,7 @@ class SLIStatuses(Base):
     id = Column(Integer, primary_key=True)
     status_desc = Column(String)
     indicates_attendance = Column(Boolean)
-    
+
     ## Relationships:
     sub_lineitem = relationship('SubLineitem', back_populates='sli_statuses')    
     
@@ -59,6 +62,98 @@ class PriceTypes(Base):
     def __repr__(self):
         return "<PriceType(id='%d', price_type_desc='%s')>" % (self.id, 
                                                                self.price_type_desc)
+        
+class Inventory(Base):
+    """
+    Inventory holds all the perf, production, and production_season ids and
+    their corresponding names. All three of those tables/classes must have an
+    id in inventory.
+    """
+    __tablename__ = 'inventory'
+    
+    ## id must be included in imports of T_INVENTORY because it is not a 
+    ## contiguous value in Tessitura. It maps to inv_no.
+    id = Column(Integer, primary_key=True)
+    inv_desc = Column(String)
+    ## For inv_type: R = Performance, S = Prod Season, P = Production, T = Title
+    inv_type = Column(String) 
+    
+    ## Relationships:
+    perf = relationship('Perf', back_populates='inventory')
+    prod_season = relationship('ProductionSeason', back_populates='inventory')
+    production = relationship('Production', back_populates='inventory')
+    
+    def __repr__(self):
+        return "<Inventory(id='%d')>" % (self.id)
+    
+class Perf(Base):
+    __tablename__ = 'perf'
+    
+    ## id must be included in imports of T_PERF beacuse it is not a 
+    ## contiguous value in Tessitura. It maps to perf_no.
+    id = Column(Integer, ForeignKey('inventory.id'), primary_key=True) 
+    prod_season_id = Column(Integer, ForeignKey('prod_season.id'))
+    perf_dt = Column(DateTime)
+    perf_type = Column(Integer, ForeignKey('perf_types.id'))
+    
+    ## Relationships:
+    sub_lineitem = relationship('SubLineitem', back_populates='perf')
+    inventory = relationship('Inventory', back_populates='perf')
+    prod_season = relationship('ProductionSeason', back_populates='perf')
+    perf_types = relationship('PerfTypes', back_populates='perf')
+    
+    def __repr__(self):
+        return "<Perf(id='%d')>" % (self.id)    
+    
+class PerfTypes(Base):
+    __tablename__ = 'perf_types'
+    
+    id = Column(Integer, primary_key=True)
+    perf_type_desc = Column(String)
+    
+    ## Relationships
+    perf = relationship('Perf', back_populates='perf_types')
+    
+    def __repr__(self):
+        return "<PerfType(id='%d', perf_type_desc='%s')>" % (self.id, 
+                         self.perf_type_desc)      
+    
+class ProductionSeason(Base):
+    __tablename__ = 'prod_season'
+    
+    ## id must be included in imports of T_PROD_SEASON beacuse it is not a 
+    ## contiguous value in Tessitura. It maps to prod_season_no.    
+    id = Column(Integer, ForeignKey('inventory.id'), primary_key=True)
+    production_id = Column(Integer, ForeignKey('production.id'))
+    
+    ## Relationships:
+    inventory = relationship('Inventory', back_populates='prod_season')
+    perf = relationship('Perf', back_populates='prod_season')
+    production = relationship('Production', back_populates='prod_season')
+    
+    def __repr__(self):
+        return "<ProductionSeason(id='%d', prod_season_id='%d')>" % (self.id,
+                                 self.prod_season_id)    
+    
+"""
+Not sure if this class is wholly necessary, since all we really need to know is 
+the production_id so that we can get the name of the production from 
+T_INVENTORY so that we can apply category mapping rules.
+"""
+class Production(Base):
+    __tablename__ = 'production'
+    
+    ## id must be included in imports of T_PRODUCTION beacuse it is not a 
+    ## contiguous value in Tessitura. It maps to prod_no.    
+    id = Column(Integer, ForeignKey('inventory.id'), primary_key=True)
+    
+    ## Relationships:
+    inventory = relationship('Inventory', back_populates='production')
+    prod_season = relationship('ProductionSeason', back_populates='production')
+    
+    def __repr__(self):
+        return "<Production(id='%d')>" % (self.id)        
+        
 
 def test__objects():
     """
@@ -89,6 +184,14 @@ def test__objects():
                      PriceTypes(price_type_desc='Child (Under 5)',
                                    price_type_category=1)
     ])
+                     
+    session.add_all([Inventory(id=143,
+                               inv_desc='MHC Admissions FY16',
+                               inv_type='R'),
+                     Inventory(id=248,
+                               inv_desc='MCM Daily Admissions',
+                               inv_type='R'),
+                    ])
     
     session.add_all([SubLineitem(paid_amt=0.00,
                                  price_type_id=3,
@@ -96,28 +199,28 @@ def test__objects():
                                  last_update_dt=dt.strptime('2016-03-10 15:16', '%Y-%m-%d %H:%M'),
                                  sli_status_id=1,
                                  perf_no=143,
-                                 original_price_type=17),
+                                 original_price_type_id=3),
                      SubLineitem(paid_amt=0.00,
                                  price_type_id=2,
                                  create_dt=dt.strptime('2016-03-10 15:16', '%Y-%m-%d %H:%M'),
                                  last_update_dt=dt.strptime('2016-03-10 15:16', '%Y-%m-%d %H:%M'),
                                  sli_status_id=1,
                                  perf_no=143,
-                                 original_price_type=11),
+                                 original_price_type_id=2),
                      SubLineitem(paid_amt=12.00,
                                  price_type_id=1,
                                  create_dt=dt.strptime('2016-03-10 15:16', '%Y-%m-%d %H:%M'),
                                  last_update_dt=dt.strptime('2016-03-10 15:16', '%Y-%m-%d %H:%M'),
                                  sli_status_id=2,
                                  perf_no=248,
-                                 original_price_type=1),
+                                 original_price_type_id=1),
                      SubLineitem(paid_amt=12.00,
                                  price_type_id=1,
                                  create_dt=dt.strptime('2016-03-10 15:16', '%Y-%m-%d %H:%M'),
                                  last_update_dt=dt.strptime('2016-03-10 15:16', '%Y-%m-%d %H:%M'),
                                  sli_status_id=2,
                                  perf_no=248,
-                                 original_price_type=1),                                     
+                                 original_price_type_id=1),                                     
         ])
         
     session.commit()  
