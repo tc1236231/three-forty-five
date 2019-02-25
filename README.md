@@ -47,7 +47,7 @@ Clone and enter the repo. Then:
 
 5. Start the Flask development server (note: Cloud9 requires port 8080):
 
-        $ python mnhsdata/application.py --debug --port 8080
+        $ python tff/application.py --debug --port 8080
 
 6. Open http://127.0.0.1:8080/ in a web browser to view the output of your
    service.
