@@ -5,7 +5,8 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        'flask',
+        'Flask==1.0.2',
+        'Flask-SQLAlchemy==2.3.2',
     ],
     setup_requires=[
         'pytest-runner',
