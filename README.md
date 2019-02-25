@@ -1,4 +1,4 @@
-Welcome to the AWS CodeStar sample web service
+ThreeFourtyFive
 ==============================================
 
 This sample code helps get you started with a simple Flask web service
@@ -16,7 +16,7 @@ This sample includes:
   the Flask application
 * setup.py - this file is used by Python's setuptools library to describe how
   your application will be packaged and installed
-* helloworld/ - this directory contains the Python source code for your Flask application
+* mnhsdata/ - this directory contains the Python source code for your Flask application
 * tests/ - this directory contains unit tests for your application
 * .ebextensions/ - this directory contains the configuration files that allow
   AWS Elastic Beanstalk to deploy your application
@@ -27,59 +27,43 @@ This sample includes:
 Getting Started
 ---------------
 
-These directions assume you want to develop on your local computer, and not
-from the Amazon EC2 instance itself. If you're on the Amazon EC2 instance, the
-virtual environment is already set up for you, and you can start working on the
-code.
+Clone and enter the repo. Then:
 
-To work on the sample code, you'll need to clone your project's repository to your
-local computer. If you haven't, do that first. You can find instructions in the
-AWS CodeStar user guide.
+1. Create a Python virtual environment:
 
-1. Create a Python virtual environment for your Flask project. This virtual
-   environment allows you to isolate this project and install any packages you
-   need without affecting the system Python installation. At the terminal, type
-   the following command:
-
-        $ virtualenv .venv
+        $ python3 -m venv venv
 
 2. Activate the virtual environment:
 
-        $ activate ./venv/bin/activate
+        $ . venv/bin/activate
 
 3. Install Python dependencies for this project:
 
         $ pip install -r requirements.txt
 
-4. Install the sample application code into your virtual environment:
+4. Install the application code into your virtual environment:
 
-        $ python setup.py install
+        $ pip install -e .  # sudo pip install -e . for Cloud9 
 
-5. Start the Flask development server:
+5. Start the Flask development server (note: Cloud9 requires port 8080):
 
-        $ python helloworld/application.py --port 8000
+        $ python mnhsdata/application.py --debug --port 8080
 
-6. Open http://127.0.0.1:8000/ in a web browser to view the output of your
+6. Open http://127.0.0.1:8080/ in a web browser to view the output of your
    service.
 
 What Do I Do Next?
 ------------------
 
-Once you have a virtual environment running, you can start making changes to
-the sample Flask web service. We suggest making a small change to application.py first,
-so you can see how changes pushed to your project's repository are automatically picked
-and deployed to the Amazon EC2 instance by AWS Elastic Beanstalk. (You can watch the
-progress on your project dashboard.) Once you've seen how that works, start developing
-your own code, and have fun!
-
-To run your tests locally, go to the root directory of the sample code and run
-the `python setup.py pytest` command, which AWS CodeBuild also runs through
-your `buildspec.yml` file.
+Once you have a virtual environment running, you can start making changes. To
+run your tests locally, go to the root directory of the sample code and run the
+`python setup.py pytest` command, which AWS CodeBuild also runs through your
+`buildspec.yml` file.
 
 To test your new code during the release process, modify the existing tests or
 add tests to the tests directory. AWS CodeBuild will run the tests during the
-build stage of your project pipeline. You can find the test results
-in the AWS CodeBuild console.
+build stage of the project pipeline. You can find the test results in the AWS
+CodeBuild console.
 
 Learn more about AWS CodeBuild and how it builds and tests your application here:
 https://docs.aws.amazon.com/codebuild/latest/userguide/concepts.html
