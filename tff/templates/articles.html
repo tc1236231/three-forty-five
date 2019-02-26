@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block main %}
+  <div class="col-md-12 blog-main">
+    <h3 class="pb-3 mb-4 font-italic border-bottom text-muted">
+      {% if selected_tag %}
+        Articles tagged {{ selected_tag }}
+      {% else %}
+        All Articles
+      {% endif %}
+    </h3>
+    <ul  class="list-inline">
+      <li class="list-inline-item">Tags:</li>
+      {% for tag in tags %}
+        <li class="list-inline-item">
+          <a href="{{ url_for('articles', tag_name=tag.name) }}"">{{ tag.name }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+
+    {% for article in articles %}
+      {% include 'components/article_card.html' %}
+    {% endfor %}
+
+  </div><!-- /.blog-main -->
+{% endblock %}
