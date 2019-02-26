@@ -12,7 +12,7 @@
       <li class="list-inline-item">Tags:</li>
       {% for tag in tags %}
         <li class="list-inline-item">
-          <a href="{{ url_for('articles', tag_name=tag.name) }}"">{{ tag.name }}</a>
+          <a href="{{ url_for('articles', tag_name=tag.name) }}">{{ tag.name }}</a>
         </li>
       {% endfor %}
     </ul>
