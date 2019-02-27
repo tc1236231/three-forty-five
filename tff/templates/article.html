@@ -2,21 +2,30 @@
 {% block main %}
   <div class="blog-post">
     <h2 class="blog-post-title">{{ article.title }}</h2>
-    <p class="blog-post-meta">{{ article.date }}
-      <br />
-      {#
-      <fonts>Tags:
-        {% for x in articleJson.tagList %}
-          <a href="{{  url_for('blog.view_articles_with_tag', name=x) }}">{{ x }}</a>
-        {% endfor %}
-      </fonts>
-      #}
-    </p>
+    <div class="blog-post-meta">
+      {{ article.date }}
+      <br>
+      {% set tags = article.tags %}
+      {% include "components/inline_tag_list.html" %}
+    </div>
 
     <p>{{ article.description }}</p>
     <hr>
-    <div>
-      Ahoy
-    </div>
+
+    {% if notebook_path %}
+      <div id="iframe-div" class="embed-responsive embed-responsive-16by9">
+        <iframe class="embed-responsive-item"
+                onload="document.getElementById('iframe-div').style.height=(this.contentDocument.body.scrollHeight) +'px';"
+                scrolling="no"
+                src="{{ url_for('static', filename=notebook_path) }}">
+        </iframe>
+      </div>
+    {% elif markdown_content %}
+      {{ markdown_content | markdown }}
+    {% else %}
+      {{ html_content | safe }}
+    {% endif %}
+
   </div><!-- /.blog-post -->
+
 {% endblock %}

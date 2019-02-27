@@ -1,10 +1,12 @@
 #!flask/bin/python
 
+import os
 import datetime as dt
 
 from flask import Flask, request, render_template
 from tff.flaskrun import flaskrun
 from flask_sqlalchemy import SQLAlchemy
+from flaskext.markdown import Markdown
 
 
 # Setup ------------------------------------------------------------------------
@@ -14,7 +16,7 @@ application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
 application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(application)
-
+Markdown(application)
 
 # Models -----------------------------------------------------------------------
 
@@ -72,15 +74,15 @@ db.session.add_all([
         title='An Article',
         date=dt.datetime.utcnow(),
         description='Definitely just an article.',
-        file_path='somewhere',
-        tags=[Tag(name='Hip'), cool_tag]
+        file_path='hil_analysis.html',
+        tags=[Tag(name='Notebook'), Tag(name='Hip'), cool_tag]
     ),
     Article(
         slug='another-article',
         title='Another Article',
         date=dt.datetime.utcnow(),
         description='Yep... Here is another one.',
-        file_path='somewhere_else',
+        file_path='another-article.html',
         tags=[Tag(name='Free'), Tag(name='Easy'), cool_tag]
     ),
     FeaturedArticle(
@@ -88,7 +90,7 @@ db.session.add_all([
         title='Yet Another Article',
         date=dt.datetime.utcnow(),
         description='Just so many articles.',
-        file_path='somewhere',
+        file_path='yet-another-article.md',        
         tags=[Tag(name='Sassy'), Tag(name='Naughty')]
     )
 ])
@@ -110,19 +112,22 @@ def index():
 @application.route('/article/<slug>')
 def article(slug):
     article = Article.query.filter_by(slug=slug).one()
+    content_path = os.path.join('articles', article.file_path)
+    context = {'article': article}
+    
+    if 'notebook' in (tag.name.lower() for tag in article.tags):
+        context['notebook_path'] = content_path
+    else:
+        fullpath = os.path.join(application.static_folder, content_path)
+        with open(fullpath) as f:
+            content = f.read()
+            
+            if content_path[-3:].lower() == '.md':
+                context['markdown_content'] = content
+            else:
+                context['html_content'] = content
 
-    return render_template('article.html', article=article)
-
-    #         file_path = str(articleJson['filePath'])
-    #         if file_path[-3:] == ".md" or file_path[-3:] == ".MD":
-    #             with current_app.open_resource("../pages/static/" + file_path) as f:
-    #                 content = f.read()
-    #                 articleJson['body'] = markdown(content.decode("utf-8"))
-    #             return render_blog('blog/article.html', articleJson=articleJson)
-    #         else:
-    #             return render_blog('blog/static_article.html', articleJson=articleJson)
-    # else:
-    #     raise InvalidUsage('Failed to get article information', status_code=article.status_code)
+    return render_template('article.html', **context)
 
 
 @application.route('/articles')
