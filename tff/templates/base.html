@@ -17,10 +17,10 @@
       <header class="blog-header py-3">
         <div class="row flex-nowrap justify-content-between align-items-center">
           <div class="col pt-1">
-            <a href="{{ url_for('index') }}"><img style="width: 10rem;" src="{{ url_for('static', filename='mnhs_logo_2color.png') }}"></a>
+            <a href="{{ url_for('blog.index') }}"><img style="width: 10rem;" src="{{ url_for('static', filename='mnhs_logo_2color.png') }}"></a>
           </div>
           <div class="col-8 text-center">
-            <a class="blog-header-logo text-dark" href="{{ url_for('index') }}">Business Intelligence &<br> Process Improvement</a>
+            <a class="blog-header-logo text-dark" href="{{ url_for('blog.index') }}">Business Intelligence &<br> Process Improvement</a>
           </div>
           <div class="col d-flex justify-content-end align-items-center">
             <a class="text-muted" href="#">
@@ -31,13 +31,7 @@
         </div>
       </header>
 
-      <div class="nav-scroller py-1 mb-2">
-        <nav class="nav d-flex justify-content-between">
-          {% for x in tagsJson %}
-            {# <a class="p-2 text-muted" href="{{ url_for('blog.view_articles_with_tag', name=x.name) }}">{{ x.name }}</a>  #}
-          {% endfor %}
-        </nav>
-      </div>
+      {% include "components/nav_bar.html" %}
 
       {% include "alert.html" %}
 

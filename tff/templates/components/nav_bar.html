@@ -1,0 +1,7 @@
+<div class="nav-scroller py-1 mb-2">
+    <nav class="nav d-flex justify-content-between">
+      {% for x in top_tags() %}
+        <a class="p-2 text-muted" href="{{ url_for('blog.articles', tag_name=x.name) }}">{{ x.name }}</a>
+      {% endfor %}
+    </nav>
+</div>

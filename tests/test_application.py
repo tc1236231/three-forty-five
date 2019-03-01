@@ -39,6 +39,7 @@ def test_article(app, client):
             tags=[
             ]
         ))
+        db.session.commit()
 
-    client.get('/article/an-article').status_code == 200
+    assert client.get('/article/an-article').status_code == 200
 
