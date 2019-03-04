@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block extra_head_scripts %}<script src="https://code.highcharts.com/highcharts.js"></script>{% endblock %}
+{% block main %}
+	<div id="chart" style="height: 550px; width: 80%; margin: 0 auto"></div>
+	<br>
+	<br>
+    <div id="sites" style="width: 80%; margin: 0 auto; text-align:center;">
+
+    </div>
+	<script>
+		var labelsArr = [];
+		var dataPoints = [];
+		var dataPoints2 = [];
+		var dataPoints3 = [];
+		var dataPoints4 = [];
+		var dataPoints5 = [];
+		var dataPoints6 = [];
+		var dataPoints7 = [];
+		var dataPoints8 = [];
+		var chart = undefined;
+
+		var timeFormat = 'HH:mm:ss';
+		var fullData = {};
+
+		function viewSite(name)
+        {
+            while(chart.series.length > 0)
+                chart.series[0].remove(true);
+            $.each(fullData[name], function (category, detail) {
+                labelsArr = [];
+                for (var i = 0; i < detail.month_start.length; i++) {
+                    labelsArr.push(new Date(detail.month_start[i]));
+                }
+                dataPoints = [];
+                for (var i = 0; i < detail.visits.length; i++) {
+                    dataPoints.push([labelsArr[i].getTime(), parseFloat((detail.visits[i]).toFixed(2))]);
+                }
+                labelsArr.sort(function (a, b) {
+                    return a - b
+                });
+                dataPoints.sort(function (a, b) {
+                    return a[0] - b[0]
+                });
+                chart.addSeries({
+                    name: category,
+                    data: dataPoints
+                }, false);
+            });
+
+            chart.setSubtitle({
+                text: name + ' ' + labelsArr.length + ' Data Entries'
+            });
+
+            chart.redraw();
+        }
+
+		function addData(data) {
+		    fullData = data;
+		    var chart = createChart();
+            $.each(data, function (name, val) {
+                var r = $('<input/>').attr({
+                             type: "button",
+                             id: name + "Btn",
+                             value: name,
+                             onclick: "viewSite('" + name + "')"
+                        });
+                $("#sites").append(r);
+            });
+
+            viewSite( 'Folsom House');
+		}
+
+		$.getJSON("{{ url_for('static', filename='data.json')}}", addData);
+		function createChart() {
+            chart = Highcharts.chart('chart', {
+                chart: {
+                zoomType: 'x'
+                },
+
+                title: {
+                text: 'Attendance Chart'
+                },
+
+                subtitle: {
+                text: '' + labelsArr.length + ' Data Entries'
+                },
+
+                yAxis: {
+                    title: {
+                        text: 'Val'
+                    }
+                },
+                plotOptions: {
+                    series: {
+                        marker: {
+                            enabled: false
+                        }
+                    }
+                },
+
+                tooltip: {
+                    shared:true,
+                    crosshairs:true,
+                    valueDecimals: 2,
+                    xDateFormat: '%Y-%m-%d',
+                },
+
+                xAxis: {
+                    type: 'datetime',
+                    title: {
+                        text: 'Time'
+                    },
+                },
+
+                legend: {
+                    align: 'center',
+                    borderWidth: 0
+                },
+
+                series: []
+            });
+            return chart;
+	    }
+	</script>
+{% endblock %}
