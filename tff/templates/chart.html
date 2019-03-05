@@ -1,31 +1,29 @@
 {% extends "base.html" %}
 {% block extra_head_scripts %}<script src="https://code.highcharts.com/highcharts.js"></script>{% endblock %}
 {% block main %}
-	<div id="chart" style="height: 550px; width: 80%; margin: 0 auto"></div>
-	<br>
-	<br>
-    <div id="sites" style="width: 80%; margin: 0 auto; text-align:center;">
-
+    <div class="form-row">
+        <div class="col-2">
+            <label for="siteSelector">Please select a site:</label>
+        </div>
+        <div class="col-10">
+            <select class="form-control" id="siteSelector">
+            </select>
+        </div>
     </div>
+	<div id="chart" class="col-16" style="height: 550px;"></div>
+
 	<script>
 		var labelsArr = [];
 		var dataPoints = [];
-		var dataPoints2 = [];
-		var dataPoints3 = [];
-		var dataPoints4 = [];
-		var dataPoints5 = [];
-		var dataPoints6 = [];
-		var dataPoints7 = [];
-		var dataPoints8 = [];
 		var chart = undefined;
 
-		var timeFormat = 'HH:mm:ss';
 		var fullData = {};
 
 		function viewSite(name)
         {
             while(chart.series.length > 0)
                 chart.series[0].remove(true);
+
             $.each(fullData[name], function (category, detail) {
                 labelsArr = [];
                 for (var i = 0; i < detail.month_start.length; i++) {
@@ -35,9 +33,6 @@
                 for (var i = 0; i < detail.visits.length; i++) {
                     dataPoints.push([labelsArr[i].getTime(), parseFloat((detail.visits[i]).toFixed(2))]);
                 }
-                labelsArr.sort(function (a, b) {
-                    return a - b
-                });
                 dataPoints.sort(function (a, b) {
                     return a[0] - b[0]
                 });
@@ -48,7 +43,7 @@
             });
 
             chart.setSubtitle({
-                text: name + ' ' + labelsArr.length + ' Data Entries'
+                text: name + ' - ' + labelsArr.length + ' Data Entries'
             });
 
             chart.redraw();
@@ -56,33 +51,32 @@
 
 		function addData(data) {
 		    fullData = data;
-		    var chart = createChart();
+            chart = createChart();
+            let site = "";
             $.each(data, function (name, val) {
-                var r = $('<input/>').attr({
-                             type: "button",
-                             id: name + "Btn",
+                site = name;
+                var r = $('<option/>').attr({
                              value: name,
-                             onclick: "viewSite('" + name + "')"
-                        });
-                $("#sites").append(r);
+                        }).html(name);
+                $("#siteSelector").append(r);
             });
 
-            viewSite( 'Folsom House');
+            viewSite(site);
 		}
 
 		$.getJSON("{{ url_for('static', filename='data.json')}}", addData);
 		function createChart() {
             chart = Highcharts.chart('chart', {
                 chart: {
-                zoomType: 'x'
+                    zoomType: 'x'
                 },
 
                 title: {
-                text: 'Attendance Chart'
+                    text: 'MNHS Attendance Chart'
                 },
 
                 subtitle: {
-                text: '' + labelsArr.length + ' Data Entries'
+                    text: 'subtitle'
                 },
 
                 yAxis: {
@@ -121,5 +115,9 @@
             });
             return chart;
 	    }
+
+	    $("#siteSelector").change(function(){
+          viewSite(this.value);
+        });
 	</script>
 {% endblock %}
