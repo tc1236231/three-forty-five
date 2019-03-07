@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block main %}
+  <div class="col-md-12 blog-main">
+    <h3 class="pb-3 mb-4 font-italic border-bottom text-muted">
+      {% if selected_tag %}
+        Articles tagged {{ selected_tag }}
+      {% else %}
+        All Articles
+      {% endif %}
+    </h3>
+    {% include "components/inline_tag_list.html" %}
+    
+    {% for article in articles %}
+      {% include 'components/article_card.html' %}
+    {% endfor %}
+
+  </div><!-- /.blog-main -->
+{% endblock %}

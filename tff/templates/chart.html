@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block extra_head_scripts %}<script src="https://code.highcharts.com/highcharts.js"></script>{% endblock %}
+{% block main %}
+    <div class="form-row">
+        <div class="col-2">
+            <label for="siteSelector">Please select a site:</label>
+        </div>
+        <div class="col-10">
+            <select class="form-control" id="siteSelector">
+            </select>
+        </div>
+    </div>
+	<div id="chart" class="col-16" style="height: 550px;"></div>
+
+	<script>
+		var labelsArr = [];
+		var dataPoints = [];
+		var chart = undefined;
+
+		var fullData = {};
+
+		function viewSite(name)
+        {
+            while(chart.series.length > 0)
+                chart.series[0].remove(true);
+
+            $.each(fullData[name], function (category, detail) {
+                labelsArr = [];
+                for (var i = 0; i < detail.month_start.length; i++) {
+                    labelsArr.push(new Date(detail.month_start[i]));
+                }
+                dataPoints = [];
+                for (var i = 0; i < detail.visits.length; i++) {
+                    dataPoints.push([labelsArr[i].getTime(), parseFloat((detail.visits[i]).toFixed(2))]);
+                }
+                dataPoints.sort(function (a, b) {
+                    return a[0] - b[0]
+                });
+                chart.addSeries({
+                    name: category,
+                    data: dataPoints
+                }, false);
+            });
+
+            chart.setSubtitle({
+                text: name + ' - ' + labelsArr.length + ' Data Entries'
+            });
+
+            chart.redraw();
+        }
+
+		function addData(data) {
+		    fullData = data;
+            chart = createChart();
+            let site = "";
+            $.each(data, function (name, val) {
+                site = name;
+                var r = $('<option/>').attr({
+                             value: name,
+                        }).html(name);
+                $("#siteSelector").append(r);
+            });
+
+            viewSite(site);
+		}
+
+		$.getJSON("{{ url_for('static', filename='data.json')}}", addData);
+		function createChart() {
+            chart = Highcharts.chart('chart', {
+                chart: {
+                    zoomType: 'x'
+                },
+
+                title: {
+                    text: 'MNHS Attendance Chart'
+                },
+
+                subtitle: {
+                    text: 'subtitle'
+                },
+
+                yAxis: {
+                    title: {
+                        text: 'Val'
+                    }
+                },
+                plotOptions: {
+                    series: {
+                        marker: {
+                            enabled: false
+                        }
+                    }
+                },
+
+                tooltip: {
+                    shared:true,
+                    crosshairs:true,
+                    valueDecimals: 2,
+                    xDateFormat: '%Y-%m-%d',
+                },
+
+                xAxis: {
+                    type: 'datetime',
+                    title: {
+                        text: 'Time'
+                    },
+                },
+
+                legend: {
+                    align: 'center',
+                    borderWidth: 0
+                },
+
+                series: []
+            });
+            return chart;
+	    }
+
+	    $("#siteSelector").change(function(){
+          viewSite(this.value);
+        });
+	</script>
+{% endblock %}

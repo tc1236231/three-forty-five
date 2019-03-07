@@ -1,0 +1,21 @@
+<div class="blog-post card">
+  <div class="card-header">
+    {% for tag in article.tags %}
+      <a class="btn btn-outline-secondary btn-sm"
+         href="{{ url_for('blog.articles', tag_name=tag.name) }}">
+        {{ tag.name }}
+      </a>
+    {% endfor %}
+    {% if article.type == 'featured_article' %}
+      <span class="btn-sm alert-warning border float-right" role="alert">
+        <strong>Featured</strong>
+      </span>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    <h2 class="blog-post-title">{{ article.title }}</h2>
+
+    <p class="block-with-text">{{ article.description }}</p>
+    <a class="btn btn-primary" href="{{ url_for('blog.article', slug=article.slug) }}">Continue reading</a>
+  </div>
+</div>

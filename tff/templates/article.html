@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block main %}
+  <div class="blog-post">
+    <h2 class="blog-post-title">{{ article.title }}</h2>
+    <div class="blog-post-meta">
+      {{ article.date }}
+      <br>
+      {% set tags = article.tags %}
+      {% include "components/inline_tag_list.html" %}
+    </div>
+
+    <p>{{ article.description }}</p>
+    <hr>
+
+    {% if notebook_path %}
+      <div id="iframe-div" class="embed-responsive embed-responsive-16by9">
+        <iframe class="embed-responsive-item"
+                onload="document.getElementById('iframe-div').style.height=(this.contentDocument.body.scrollHeight) +'px';"
+                scrolling="no"
+                src="{{ url_for('static', filename=notebook_path) }}">
+        </iframe>
+      </div>
+    {% elif markdown_content %}
+      {{ markdown_content | markdown }}
+    {% else %}
+      {{ html_content | safe }}
+    {% endif %}
+
+  </div><!-- /.blog-post -->
+
+{% endblock %}
