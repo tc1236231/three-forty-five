@@ -9,14 +9,14 @@ from tff.db import db
 from tff.database import init_db
 from tff import blog, chart
 
-application = Flask(__name__)
-application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
-application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db.init_app(application)
-init_db(application)
+db.init_app(app)
+init_db(app)
 
-Markdown(application)
+Markdown(app)
 
 
 def register_blueprints(app):
@@ -25,7 +25,7 @@ def register_blueprints(app):
     app.register_blueprint(chart.blueprint)
 
 
-register_blueprints(application)
+register_blueprints(app)
 
 
 def register_errorhandlers(app):
@@ -36,8 +36,8 @@ def register_errorhandlers(app):
     app.errorhandler(InvalidUsage)(errorhandler)
 
 
-register_errorhandlers(application)
+register_errorhandlers(app)
 
 
 if __name__ == '__main__':
-    flaskrun(application)
+    flaskrun(app)
