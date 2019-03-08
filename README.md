@@ -1,5 +1,4 @@
 ThreeFourtyFive
-==============================================
 
 This sample code helps get you started with a simple Flask web service
 deployed by AWS Elastic Beanstalk and AWS CloudFormation.
@@ -86,3 +85,4 @@ and AWS CloudFormation provision the resources for you.
 
 See the AWS CodeStar user guide for instructions to modify your template:
 https://docs.aws.amazon.com/codestar/latest/userguide/how-to-change-project#customize-project-template.html
+=======
