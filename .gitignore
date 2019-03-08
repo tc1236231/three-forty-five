@@ -6,4 +6,4 @@ dist/
 tff.egg-info/
 __pycache__
 venv/
-docker-compose.override
+docker-compose.override.yml
