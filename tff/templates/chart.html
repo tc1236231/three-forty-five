@@ -23,15 +23,31 @@
                 chart.series[0].remove(true);
 
             let categoryData = {};
-
+            let sumData = {};
             $.each(fullData[name], function (index, dataEntry) {
                 let category = dataEntry.category;
                 if(!categoryData[category])
                 {
                     categoryData[category] = [];
                 }
-                let entryDate = new Date(dataEntry.year + "-" + dataEntry.month);
-                categoryData[category].push([entryDate.getTime(), parseFloat((dataEntry.count).toFixed(2))]);
+                let entryDateTime = new Date(dataEntry.year + "-" + dataEntry.month).getTime();
+                if(!sumData[entryDateTime])
+                {
+                    sumData[entryDateTime] = dataEntry.count;
+                }
+                else
+                {
+                    sumData[entryDateTime] += dataEntry.count;
+                }
+                categoryData[category].push([entryDateTime, parseFloat((dataEntry.count).toFixed(2))]);
+            });
+
+            let sumDataPoints = [];
+            $.each(sumData, function (entryDateTime, count) {
+                sumDataPoints.push([parseInt(entryDateTime),count]);
+            });
+            sumDataPoints.sort(function (a, b) {
+                return a[0] - b[0]
             });
 
             $.each(categoryData, function (category, dataEntry) {
@@ -43,6 +59,32 @@
                     data: dataEntry
                 }, false);
             });
+
+            chart.addSeries({
+                name: 'Sum',
+                data: sumDataPoints,
+                color: 'black',
+                events: {
+                    hide: function () {
+                        setTimeout(function(){
+                            $(chart.series).each(function(index, series){
+                                if(series.name !== 'Sum')
+                                    this.setVisible(true, true);
+                            });
+                            chart.redraw();
+                        }, 1);
+                    },
+                    show: function () {
+                        setTimeout(function(){
+                            $(chart.series).each(function(index, series){
+                                if(series.name !== 'Sum')
+                                    this.setVisible(false, false);
+                            });
+                            chart.redraw();
+                        }, 1);
+                    }
+                }
+            }, false).setVisible(false,false);
 
             chart.setSubtitle({
                 text: name + ' - ' + fullData[name].length + ' Data Entries'
