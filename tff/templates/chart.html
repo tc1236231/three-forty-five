@@ -13,10 +13,8 @@
 	<div id="chart" class="col-16" style="height: 550px;"></div>
 
 	<script>
-		var labelsArr = [];
-		var dataPoints = [];
 		var chart = undefined;
-
+		var sites = [];
 		var fullData = {};
 
 		function viewSite(name)
@@ -24,47 +22,57 @@
             while(chart.series.length > 0)
                 chart.series[0].remove(true);
 
-            $.each(fullData[name], function (category, detail) {
-                labelsArr = [];
-                for (var i = 0; i < detail.month_start.length; i++) {
-                    labelsArr.push(new Date(detail.month_start[i]));
+            let categoryData = {};
+
+            $.each(fullData[name], function (index, dataEntry) {
+                let category = dataEntry.category;
+                if(!categoryData[category])
+                {
+                    categoryData[category] = [];
                 }
-                dataPoints = [];
-                for (var i = 0; i < detail.visits.length; i++) {
-                    dataPoints.push([labelsArr[i].getTime(), parseFloat((detail.visits[i]).toFixed(2))]);
-                }
-                dataPoints.sort(function (a, b) {
+                let entryDate = new Date(dataEntry.year + "-" + dataEntry.month);
+                categoryData[category].push([entryDate.getTime(), parseFloat((dataEntry.count).toFixed(2))]);
+            });
+
+            $.each(categoryData, function (category, dataEntry) {
+                dataEntry.sort(function (a, b) {
                     return a[0] - b[0]
                 });
                 chart.addSeries({
                     name: category,
-                    data: dataPoints
+                    data: dataEntry
                 }, false);
             });
 
             chart.setSubtitle({
-                text: name + ' - ' + labelsArr.length + ' Data Entries'
+                text: name + ' - ' + fullData[name].length + ' Data Entries'
             });
 
             chart.redraw();
         }
 
 		function addData(data) {
-		    fullData = data;
+		    fullData = {};
             chart = createChart();
-            let site = "";
-            $.each(data, function (name, val) {
-                site = name;
-                var r = $('<option/>').attr({
-                             value: name,
-                        }).html(name);
-                $("#siteSelector").append(r);
+            $.each(data, function (index, val) {
+                let site = val.site;
+                if(!fullData[site])
+                {
+                    sites.push(site);
+                    fullData[site] = [];
+                     var r = $('<option/>').attr({
+                         value: site,
+                    }).html(site);
+                    $("#siteSelector").append(r);
+                }
+                fullData[val.site].push(val);
             });
 
-            viewSite(site);
+            viewSite(sites[0]);
 		}
 
-		$.getJSON("{{ url_for('static', filename='data.json')}}", addData);
+        $.getJSON("{{ url_for('chart.attendance') }}", addData);
+
 		function createChart() {
             chart = Highcharts.chart('chart', {
                 chart: {
