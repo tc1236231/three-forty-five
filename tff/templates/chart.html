@@ -20,6 +20,7 @@
 		var chart = undefined;
         var sites = [];
 	    var fullData = {};
+	    var notTrigger = false;
 
 		function viewSite(name)
         {
@@ -60,19 +61,44 @@
                 });
                 chart.addSeries({
                     name: category,
-                    data: dataEntry
+                    data: dataEntry,
+                    events: {
+                        hide: function () {
+                            setTimeout(function(){
+                                $(chart.series).each(function(index, series){
+                                    //if(series.name === 'Overall Total')
+                                        //this.setVisible(true, true);
+                                });
+                                chart.redraw();
+                            }, 1);
+                        },
+                        show: function () {
+                            setTimeout(function(){
+                                notTrigger = true;
+                                $(chart.series).each(function(index, series){
+                                    if(series.name === 'Overall Total')
+                                        this.setVisible(false, false);
+                                });
+                                chart.redraw();
+                                notTrigger = false;
+                            }, 1);
+                        }
+                    }
                 }, false);
             });
 
             chart.addSeries({
-                name: 'Sum',
+                name: 'Overall Total',
                 data: sumDataPoints,
                 color: 'black',
+                index: -1,
                 events: {
                     hide: function () {
+                        if(notTrigger)
+                            return;
                         setTimeout(function(){
                             $(chart.series).each(function(index, series){
-                                if(series.name !== 'Sum')
+                                if(series.name !== 'Overall Total')
                                     this.setVisible(true, true);
                             });
                             chart.redraw();
@@ -81,14 +107,14 @@
                     show: function () {
                         setTimeout(function(){
                             $(chart.series).each(function(index, series){
-                                if(series.name !== 'Sum')
+                                if(series.name !== 'Overall Total')
                                     this.setVisible(false, false);
                             });
                             chart.redraw();
                         }, 1);
                     }
                 }
-            }, false).setVisible(false,false);
+            }, false).setVisible(true,true);
 
             chart.setSubtitle({
                 text: name + ' - ' + fullData[name].length + ' Data Entries'
@@ -135,7 +161,7 @@
 
                 yAxis: {
                     title: {
-                        text: 'Val'
+                        text: 'Count'
                     }
                 },
                 plotOptions: {
@@ -149,7 +175,7 @@
                 tooltip: {
                     shared:true,
                     crosshairs:true,
-                    valueDecimals: 2,
+                    valueDecimals: 0,
                     xDateFormat: '%Y-%m-%d',
                 },
 
