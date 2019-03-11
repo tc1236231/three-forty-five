@@ -1,5 +1,9 @@
 {% extends "base.html" %}
-{% block extra_head_scripts %}<script src="https://code.highcharts.com/highcharts.js"></script>{% endblock %}
+{% block extra_head_scripts %}
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+{% endblock %}
 {% block main %}
     <div class="form-row">
         <div class="col-2">
@@ -161,7 +165,15 @@
                     borderWidth: 0
                 },
 
-                series: []
+                series: [],
+
+                exporting: {
+                    showTable: true,
+                    csv:{
+                        dateFormat: '%Y-%m-%d',
+                        itemDelimiter: ';'
+                    },
+                },
             });
             return chart;
 	    }
