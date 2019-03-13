@@ -27,6 +27,7 @@
             while(chart.series.length > 0)
                 chart.series[0].remove(true);
 
+            let maxTime = 0;
             let categoryData = {};
             let sumData = {};
             $.each(fullData[name], function (index, dataEntry) {
@@ -44,6 +45,8 @@
                 {
                     sumData[entryDateTime] += dataEntry.count;
                 }
+                if(entryDateTime > maxTime)
+                    maxTime = entryDateTime;
                 categoryData[category].push([entryDateTime, parseFloat((dataEntry.count).toFixed(2))]);
             });
 
@@ -59,19 +62,21 @@
                 dataEntry.sort(function (a, b) {
                     return a[0] - b[0]
                 });
+                let dashedStartingTime = Number.MAX_SAFE_INTEGER;
+                if(dataEntry.length >= 2 && maxTime === dataEntry[dataEntry.length - 1][0])
+                {
+                    dashedStartingTime = dataEntry[dataEntry.length - 2][0]
+                }
                 chart.addSeries({
                     name: category,
                     data: dataEntry,
+                    zoneAxis: 'x',
+                    zones: [{
+                      value: dashedStartingTime
+                    }, {
+                      dashStyle: 'dot'
+                    }],
                     events: {
-                        hide: function () {
-                            setTimeout(function(){
-                                $(chart.series).each(function(index, series){
-                                    //if(series.name === 'Overall Total')
-                                        //this.setVisible(true, true);
-                                });
-                                chart.redraw();
-                            }, 1);
-                        },
                         show: function () {
                             setTimeout(function(){
                                 notTrigger = true;
@@ -87,11 +92,23 @@
                 }, false);
             });
 
+            let dashedStartingTime = Number.MAX_SAFE_INTEGER;
+            if(sumDataPoints.length >= 2 && maxTime === sumDataPoints[sumDataPoints.length - 1][0])
+            {
+                dashedStartingTime = sumDataPoints[sumDataPoints.length - 2][0]
+            }
+
             chart.addSeries({
                 name: 'Overall Total',
                 data: sumDataPoints,
                 color: 'black',
                 index: -1,
+                zoneAxis: 'x',
+                zones: [{
+                  value: dashedStartingTime
+                }, {
+                  dashStyle: 'dot'
+                }],
                 events: {
                     hide: function () {
                         if(notTrigger)
