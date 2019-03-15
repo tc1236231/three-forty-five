@@ -11,10 +11,9 @@ def get_tag(name):
 def add_tags():
     db.session.add_all([
         Tag(name='Notebook'),
-        Tag(name='Cool'),
-        Tag(name='Hip'),
-        Tag(name='Easy'),
-        Tag(name='Free'),
+        Tag(name='HIL'),
+        Tag(name='Sales'),
+        Tag(name='Membership'),
     ])
 
     db.session.commit()
@@ -23,37 +22,26 @@ def add_tags():
 def add_articles():
     db.session.add_all([
         FeaturedArticle(
-            slug='an-article',
-            title='An Article',
-            date=dt.datetime.utcnow(),
-            description='Definitely just an article.',
-            file_path='hil_analysis.html',
+            slug='mbr-att-ren-analysis.html',
+            title='Member Renewal and Attendance Analysis',
+            date=dt.date(2019, 3, 15),
+            description='Is a member more likely to renew their membership if they have visited a site?',
+            file_path='mbr_att_and_ren_analysis.html',
             tags=[
                 get_tag('Notebook'),
-                get_tag('Hip'),
-                get_tag('Cool'),
+                get_tag('Membership'),
             ]
         ),
         Article(
-            slug='another-article',
-            title='Another Article',
-            date=dt.datetime.utcnow(),
-            description='Yep... Here is another one.',
-            file_path='another-article.html',
+            slug='hil_analysis',
+            title='Hill House Ticket Sales Analysis',
+            date=dt.date(2019, 1, 1),
+            description='Interventions begun in the holiday season of FY18 resulted in more than $40,000 of additional sales over the previous year.',
+            file_path='hil_analysis.html',
             tags=[
-                get_tag('Free'),
-                get_tag('Easy'),
-                get_tag('Cool'),
-            ]
-        ),
-        FeaturedArticle(
-            slug='yet-another-article',
-            title='Yet Another Article',
-            date=dt.datetime.utcnow(),
-            description='Just so many articles.',
-            file_path='yet-another-article.md',
-            tags=[
-                get_tag('Easy'),
+                get_tag('Notebook'),
+                get_tag('HIL'),
+                get_tag('Sales'),
             ]
         )
     ])
