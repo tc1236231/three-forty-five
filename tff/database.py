@@ -14,6 +14,8 @@ def add_tags():
         Tag(name='HIL'),
         Tag(name='Sales'),
         Tag(name='Membership'),
+        Tag(name='MHC'),
+        Tag(name='Attendance'),        
     ])
 
     db.session.commit()
@@ -21,6 +23,18 @@ def add_tags():
 
 def add_articles():
     db.session.add_all([
+        FeaturedArticle(
+            slug='exhibit-att-analysis',
+            title='Temporary Exhibits and History Center Attendance',
+            date=dt.date(2019, 3, 19),
+            description='Do temporary exhibits have any effect on History Center attendance?',
+            file_path='exhibit_att_analysis.html',
+            tags=[
+                get_tag('Notebook'),
+                get_tag('Attendance'),
+                get_tag('MHC'),
+            ]
+        ),
         FeaturedArticle(
             slug='mbr-att-ren-analysis.html',
             title='Member Renewal and Attendance Analysis',
