@@ -3,7 +3,7 @@
   <div class="blog-post">
     <h2 class="blog-post-title">{{ article.title }}</h2>
     <div class="blog-post-meta">
-      {{ article.date }}
+      {{ article.date | datetime }}
       <br>
       {% set tags = article.tags %}
       {% include "components/inline_tag_list.html" %}
@@ -20,6 +20,8 @@
                 src="{{ url_for('static', filename=notebook_path) }}">
         </iframe>
       </div>
+    {% elif dashboard_template %}
+      {% include dashboard_template %}
     {% elif markdown_content %}
       {{ markdown_content | markdown }}
     {% else %}

@@ -10,6 +10,7 @@ def get_tag(name):
 
 def add_tags():
     db.session.add_all([
+        Tag(name='Dashboard'),
         Tag(name='Notebook'),
         Tag(name='HIL'),
         Tag(name='Sales'),
@@ -24,6 +25,17 @@ def add_tags():
 def add_articles():
     db.session.add_all([
         FeaturedArticle(
+            slug='attendance',
+            title='Attendance Dashboard',
+            date=dt.date(2019, 3, 20),
+            description='See attendance trends by site and category.',
+            file_path='chart.html',
+            tags=[
+                get_tag('Dashboard'),
+                get_tag('Attendance'),
+            ]
+        ),
+        Article(
             slug='exhibit-att-analysis',
             title='Temporary Exhibits and History Center Attendance',
             date=dt.date(2019, 3, 19),

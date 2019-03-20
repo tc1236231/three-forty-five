@@ -18,7 +18,7 @@
             </h3>
             <div class="mb-1 text-white">{{ article.date | datetime}}</div>
             <p class="mb-auto text-white featured-block-with-text">{{ article.description }}</p>
-            <a class="text-white" href="{{ url_for('blog.article', slug=article.slug) }}">Continue reading...</a>
+            <a class="text-white" href="{{ url_for('blog.article', slug=article.slug) }}">View content...</a>
           </div>
           <svg class="bd-placeholder-img card-img-right flex-auto d-none d-lg-block" width="100" height="250" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Thumbnail"><title>Placeholder</title><rect fill="#55595c" width="100%" height="100%"/><text fill="#eceeef" dy=".3em" x="50%" y="50%"></text></svg>
         </div>
@@ -29,7 +29,7 @@
 
     <aside class="col-md-4 blog-sidebar">
       <div class="p-3 mb-3 bg-light rounded">
-        <h4 class="display-5"><a href="{{ url_for('chart.index') }}">DASHBOARDS</a></h4>
+        <h4 class="display-5"><a href="{{ url_for('blog.articles', tag_name='Dashboard') }}">DASHBOARDS</a></h4>
         <p class="mb-0">View interactive dashboards.</p>
       </div>
 

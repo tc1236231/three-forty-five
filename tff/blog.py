@@ -28,8 +28,12 @@ def article(slug):
     content_path = os.path.join('articles', article.file_path)
     context = {'article': article}
 
-    if 'notebook' in (tag.name.lower() for tag in article.tags):
+    tags = [tag.name.lower() for tag in article.tags]
+    if 'notebook' in tags:
         context['notebook_path'] = content_path
+    elif 'dashboard' in tags:
+        context['dashboard_template'] = os.path.join('dashboards',
+                                                     article.file_path)
     else:
         fullpath = os.path.join(current_app.static_folder, content_path)
         with open(fullpath) as f:

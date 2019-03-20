@@ -13,9 +13,9 @@
     {% endif %}
   </div>
   <div class="card-body">
-    <h2 class="blog-post-title">{{ article.title }}</h2>
+    <h2 class="blog-post-title"><a class="text-dark" href="{{ url_for('blog.article', slug=article.slug) }}">{{ article.title }}</a></h2>
     <p class="block-with-text">{{ article.date | datetime }}</p>
     <p class="block-with-text">{{ article.description }}</p>
-    <a class="btn btn-primary" href="{{ url_for('blog.article', slug=article.slug) }}">Continue reading</a>
+    <a class="btn btn-primary" href="{{ url_for('blog.article', slug=article.slug) }}">View content</a>
   </div>
 </div>
