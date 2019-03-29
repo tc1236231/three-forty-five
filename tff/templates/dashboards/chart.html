@@ -21,10 +21,172 @@
 	    var fullData = {};
 	    var notTrigger = false;
 
+	    function viewAll()
+        {
+            let maxTime = 0;
+            let siteData = {};
+            let totalData = {};
+            $.each(fullData, function (name, dataEntry) {
+                if(!siteData[name])
+                {
+                    siteData[name] = [];
+                }
+                let sumData = {};
+                $.each(dataEntry, function(key, val)
+                {
+                    let entryDateTime = new Date(val.year + "-" + val.month).getTime();
+                    if(!sumData[entryDateTime])
+                    {
+                        sumData[entryDateTime] = val.count;
+                    }
+                    else
+                    {
+                        sumData[entryDateTime] += val.count;
+                    }
+                    if(entryDateTime > maxTime)
+                        maxTime = entryDateTime;
+                });
+                $.each(sumData, function(time, count) {
+                    siteData[name].push([parseInt(time),count]);
+                    if(!totalData[time])
+                    {
+                        totalData[time] = count;
+                    }
+                    else
+                    {
+                        totalData[time] += count;
+                    }
+                });
+            });
+
+            let numSites = 0;
+            $.each(siteData, function (name, dataEntry) {
+                dataEntry.sort(function (a, b) {
+                    return a[0] - b[0]
+                });
+                let dashedStartingTime = Number.MAX_SAFE_INTEGER;
+                if(dataEntry.length >= 2 && maxTime === dataEntry[dataEntry.length - 1][0])
+                {
+                    dashedStartingTime = dataEntry[dataEntry.length - 2][0]
+                }
+                chart.addSeries({
+                    name: name,
+                    data: dataEntry,
+                    zoneAxis: 'x',
+                    zones: [{
+                      value: dashedStartingTime
+                    }, {
+                      dashStyle: 'dot'
+                    }],
+                    events: {
+                        show: function () {
+                            setTimeout(function(){
+                                notTrigger = true;
+                                $(chart.series).each(function(index, series){
+                                    if(series.name === 'Overall Total')
+                                        this.setVisible(false, false);
+                                });
+                                chart.redraw();
+                                notTrigger = false;
+                            }, 1);
+                        }
+                    }
+                }, false);
+                numSites++;
+            });
+
+            let totalDataPoints = [];
+            $.each(totalData, function (time, count) {
+                totalDataPoints.push([parseInt(time),count]);
+            });
+            totalDataPoints.sort(function (a, b) {
+                return a[0] - b[0]
+            });
+
+            let dashedStartingTime = Number.MAX_SAFE_INTEGER;
+            if(totalDataPoints.length >= 2 && maxTime === totalDataPoints[totalDataPoints.length - 1][0])
+            {
+                dashedStartingTime = totalDataPoints[totalDataPoints.length - 2][0]
+            }
+
+            let avgDataPoints = JSON.parse(JSON.stringify(totalDataPoints));
+            $.each(avgDataPoints, function(index, array){
+                array[1] = parseFloat((array[1] / numSites).toFixed(2));
+            });
+
+            chart.addSeries({
+                name: 'Average',
+                data: avgDataPoints,
+                zoneAxis: 'x',
+                zones: [{
+                  value: dashedStartingTime
+                }, {
+                  dashStyle: 'dot'
+                }],
+                events: {
+                    show: function () {
+                        setTimeout(function(){
+                            notTrigger = true;
+                            $(chart.series).each(function(index, series){
+                                if(series.name === 'Overall Total')
+                                    this.setVisible(false, false);
+                            });
+                            chart.redraw();
+                            notTrigger = false;
+                        }, 1);
+                    }
+                }
+            }, false);
+
+            chart.addSeries({
+                name: 'Overall Total',
+                data: totalDataPoints,
+                color: 'black',
+                index: -1,
+                zoneAxis: 'x',
+                zones: [{
+                  value: dashedStartingTime
+                }, {
+                  dashStyle: 'dot'
+                }],
+                events: {
+                    hide: function () {
+                        if(notTrigger)
+                            return;
+                        setTimeout(function(){
+                            $(chart.series).each(function(index, series){
+                                if(series.name !== 'Overall Total')
+                                    this.setVisible(true, true);
+                            });
+                            chart.redraw();
+                        }, 1);
+                    },
+                    show: function () {
+                        setTimeout(function(){
+                            $(chart.series).each(function(index, series){
+                                if(series.name !== 'Overall Total')
+                                    this.setVisible(false, false);
+                            });
+                            chart.redraw();
+                        }, 1);
+                    }
+                }
+            }, false).setVisible(true,true);
+
+            chart.setSubtitle({
+                text: 'All ' + numSites + ' Sites Data'
+            });
+
+            chart.redraw();
+        }
+
 		function viewSite(name)
         {
             while(chart.series.length > 0)
                 chart.series[0].remove(true);
+
+            if(name === "ALL")
+                return viewAll();
 
             let maxTime = 0;
             let categoryData = {};
@@ -142,6 +304,12 @@
 		function addData(data) {
 		    fullData = {};
             chart = createChart();
+
+            var r = $('<option/>').attr({
+                 value: 'ALL',
+            }).html("ALL SITES");
+            $("#siteSelector").append(r);
+
             $.each(data, function (index, val) {
                 let site = val.site;
                 if(!fullData[site])
@@ -156,7 +324,7 @@
                 fullData[val.site].push(val);
             });
 
-            viewSite(sites[0]);
+            viewSite('ALL');
 		}
 
         $.getJSON("{{ url_for('chart.attendance') }}", addData);
