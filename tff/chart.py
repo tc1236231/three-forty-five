@@ -14,7 +14,7 @@ def index():
 
 @blueprint.route('/attendance')
 def attendance():
-    url = "http://ec2-18-222-170-180.us-east-2.compute.amazonaws.com/monthly-attendance"
+    url = "http://api/monthly-attendance"
     try:
         res = requests.get(url)
         return jsonify(res.json())
