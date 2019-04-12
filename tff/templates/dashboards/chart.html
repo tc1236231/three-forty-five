@@ -16,6 +16,11 @@
 	<div id="chart" class="col-16" style="height: 550px;"></div>
 
 	<script>
+        const median = arr => {
+          const mid = Math.floor(arr.length / 2),
+            nums = [...arr].sort((a, b) => a - b);
+          return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
+        };
 		var chart = undefined;
         var sites = [];
 	    var fullData = {};
@@ -26,6 +31,7 @@
             let maxTime = 0;
             let siteData = {};
             let totalData = {};
+            let medianData = {};
             $.each(fullData, function (name, dataEntry) {
                 if(!siteData[name])
                 {
@@ -51,11 +57,13 @@
                     if(!totalData[time])
                     {
                         totalData[time] = count;
+                        medianData[time] = [];
                     }
                     else
                     {
                         totalData[time] += count;
                     }
+                    medianData[time].push(count);
                 });
             });
 
@@ -103,6 +111,14 @@
                 return a[0] - b[0]
             });
 
+            let medianDataPoints = [];
+            $.each(medianData, function (time, count_array) {
+                medianDataPoints.push([parseInt(time),median(count_array)]);
+            });
+            medianDataPoints.sort(function (a, b) {
+                return a[0] - b[0]
+            });
+
             let dashedStartingTime = Number.MAX_SAFE_INTEGER;
             if(totalDataPoints.length >= 2 && maxTime === totalDataPoints[totalDataPoints.length - 1][0])
             {
@@ -113,6 +129,31 @@
             $.each(avgDataPoints, function(index, array){
                 array[1] = parseFloat((array[1] / numSites).toFixed(2));
             });
+
+            chart.addSeries({
+                name: 'Median',
+                data: medianDataPoints,
+                lineWidth: 5,
+                zoneAxis: 'x',
+                zones: [{
+                  value: dashedStartingTime
+                }, {
+                  dashStyle: 'dot'
+                }],
+                events: {
+                    show: function () {
+                        setTimeout(function(){
+                            notTrigger = true;
+                            $(chart.series).each(function(index, series){
+                                if(series.name === 'Overall Total')
+                                    this.setVisible(false, false);
+                            });
+                            chart.redraw();
+                            notTrigger = false;
+                        }, 1);
+                    }
+                }
+            }, false);
 
             chart.addSeries({
                 name: 'Average',
