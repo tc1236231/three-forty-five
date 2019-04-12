@@ -2,11 +2,11 @@ version: '3'
 
 services:
 
-  web:
+  tff:
     volumes:
       - .:/app
     ports:
-      - "5000:80"
+      - "80:80"
     environment:
       - FLASK_APP=tff/main.py
       - FLASK_DEBUG=1
