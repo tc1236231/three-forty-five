@@ -13,9 +13,23 @@
     {% endif %}
   </div>
   <div class="card-body">
-    <h2 class="blog-post-title"><a class="text-dark" href="{{ url_for('blog.article', slug=article.slug) }}">{{ article.title }}</a></h2>
-    <p class="block-with-text">{{ article.date | datetime }}</p>
-    <p class="block-with-text">{{ article.description }}</p>
-    <a class="btn btn-primary" href="{{ url_for('blog.article', slug=article.slug) }}">View content</a>
+      <div class="row">
+        {% if article.img %}
+            <div class="col-8">
+        {% else %}
+            <div class="col-12">
+        {% endif %}
+                <h2 class="blog-post-title"><a class="text-dark" href="{{ url_for('blog.article', slug=article.slug) }}">{{ article.title }}</a></h2>
+                <p class="block-with-text">{{ article.date | datetime }}</p>
+                <p class="block-with-text">
+                    {{ article.description }}
+                </p>
+            </div>
+            {% if article.img %}
+                <div class="col-4">
+                        <img class="position-relative img-fluid img-thumbnail rounded float-right" width="150" height="250" src="{{ url_for('static', filename=article.img) }}"/>
+                </div>
+            {% endif %}
+      </div>
   </div>
 </div>

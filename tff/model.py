@@ -25,6 +25,7 @@ class Article(db.Model):
     date = db.Column(db.Date)
     description = db.Column(db.Text, nullable=False)
     file_path = db.Column(db.String(255))
+    img = db.Column(db.String(255))
 
     tags = db.relationship('Tag',
                            secondary=article_tag,

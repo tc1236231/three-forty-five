@@ -30,6 +30,7 @@ def add_articles():
             date=dt.date(2019, 3, 20),
             description='See attendance trends by site and category.',
             file_path='chart.html',
+            img='img/analysis-increase-graph-statistic-512.png',
             tags=[
                 get_tag('Dashboard'),
                 get_tag('Attendance'),
