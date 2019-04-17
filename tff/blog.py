@@ -65,6 +65,20 @@ def articles():
                            selected_tag=tag_name)
 
 
+@blueprint.route('/search')
+def search():
+    input = request.args.get('txt')
+    if not input:
+        return render_template('search.html')
+    else:
+        articles = Article.query.filter(
+            (Article.title.like('%' + input + '%')) |
+            (Article.description.like('%' + input + '%')) |
+            (Article.tags.any(name=input))
+        )
+        return render_template('search.html', txt=input, articles=articles)
+
+
 @blueprint.add_app_template_filter
 def datetime(value):
     date_obj = dt.date.fromisoformat(str(value))
