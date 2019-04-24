@@ -1,7 +1,9 @@
 import os
 import datetime as dt
 
-from flask import Blueprint, request, render_template, current_app
+from flask import Blueprint, request, render_template, current_app, redirect
+from flask_dance.contrib.google import google
+
 from tff.exceptions import InvalidUsage
 from tff.model import Article, FeaturedArticle, Tag, article_tag
 from flask_sqlalchemy import sqlalchemy
@@ -12,12 +14,27 @@ blueprint = Blueprint('blog', __name__)
 @blueprint.route('/')
 @blueprint.route('/index')
 def index():
+    resp = google.get("/oauth2/v1/userinfo")
     return render_template(
         'index.html',
         tags=Tag.query.all(),
         featured_articles=FeaturedArticle.query.all(),
-        latest_articles=Article.query.order_by(Article.date.desc()).limit(5)
+        latest_articles=Article.query.order_by(Article.date.desc()).limit(5),
+        user=resp.text
     )
+
+
+@blueprint.route('/revokeAccess')
+def revokeAccess():
+    token = current_app.blueprints["google"].token["access_token"]
+    resp = google.post(
+        "https://accounts.google.com/o/oauth2/revoke",
+        params={"token": token},
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+    assert resp.ok, resp.text
+    del current_app.blueprints["google"].token  # Delete OAuth token from storage
+    return redirect('blog.index')
 
 
 @blueprint.route('/article/<slug>')
