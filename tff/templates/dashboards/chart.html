@@ -40,7 +40,7 @@
                 let sumData = {};
                 $.each(dataEntry, function(key, val)
                 {
-                    let entryDateTime = new Date(val.year + "-" + val.month).getTime();
+                    let entryDateTime = new Date(val.year, parseInt(val.month, 10) - 1).getTime();
                     if(!sumData[entryDateTime])
                     {
                         sumData[entryDateTime] = val.count;
@@ -66,6 +66,8 @@
                     medianData[time].push(count);
                 });
             });
+
+            console.log(siteData);
 
             let numSites = 0;
             $.each(siteData, function (name, dataEntry) {
@@ -239,7 +241,7 @@
                 {
                     categoryData[category] = [];
                 }
-                let entryDateTime = new Date(dataEntry.year + "-" + dataEntry.month).getTime();
+                let entryDateTime = new Date(dataEntry.year, parseInt(dataEntry.month, 10) - 1).getTime();
                 if(!sumData[entryDateTime])
                 {
                     sumData[entryDateTime] = dataEntry.count;
