@@ -1,439 +1,126 @@
 {% block extra_head_scripts %}
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/exporting.js"></script>
-    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <script src="https://code.highcharts.com/modules/exporting.js"></script>
+  <script src="https://code.highcharts.com/modules/export-data.js"></script>
 {% endblock %}
+
 {% block main %}
-    <div class="form-row">
-        <div class="col-2">
-            <label for="siteSelector">Please select a site:</label>
-        </div>
-        <div class="col-10">
-            <select class="form-control" id="siteSelector">
-            </select>
-        </div>
-    </div>
-	<div id="chart" class="col-16" style="height: 550px;"></div>
+  <select class="site-select"></select>
+  <select class="category-select"></select>
+  <div id="chart" class="col-16" style="height: 550px;"></div>
+  
+  <script>
+   var visitData = null;
 
-	<script>
-        const median = arr => {
-          const mid = Math.floor(arr.length / 2),
-            nums = [...arr].sort((a, b) => a - b);
-          return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
-        };
-		var chart = undefined;
-        var sites = [];
-	    var fullData = {};
-	    var notTrigger = false;
+   var chart = Highcharts.chart('chart', {
+       chart: {
+           type: 'spline'
+       },
+       title: {
+           text: 'YOY Attendance'
+       },
+       tooltip: {
+           shared:true,
+           crosshairs:true
+       },
+       exporting: {
+           showTable: true,
+           csv:{
+               itemDelimiter: ';'
+           },
+       }
+   });
 
-	    function viewAll()
-        {
-            let maxTime = 0;
-            let siteData = {};
-            let totalData = {};
-            let medianData = {};
-            $.each(fullData, function (name, dataEntry) {
-                if(!siteData[name])
-                {
-                    siteData[name] = [];
-                }
-                let sumData = {};
-                $.each(dataEntry, function(key, val)
-                {
-                    let entryDateTime = new Date(val.year, parseInt(val.month, 10) - 1).getTime();
-                    if(!sumData[entryDateTime])
-                    {
-                        sumData[entryDateTime] = val.count;
-                    }
-                    else
-                    {
-                        sumData[entryDateTime] += val.count;
-                    }
-                    if(entryDateTime > maxTime)
-                        maxTime = entryDateTime;
-                });
-                $.each(sumData, function(time, count) {
-                    siteData[name].push([parseInt(time),count]);
-                    if(!totalData[time])
-                    {
-                        totalData[time] = count;
-                        medianData[time] = [];
-                    }
-                    else
-                    {
-                        totalData[time] += count;
-                    }
-                    medianData[time].push(count);
-                });
-            });
 
-            console.log(siteData);
+   function transformVisitData(rawVisitData) {
+       newVisitData = {};
+       
+       $.each(rawVisitData, (_, record) => {
+           if (!newVisitData[record.site]) {
+               newVisitData[record.site] = {};
+           }
+           var siteData = newVisitData[record.site];
+           
+           if (!siteData[record.category]) {
+               siteData[record.category] = {};
+           }
+           var categoryData = siteData[record.category]
+           
+           if (!categoryData[record.year]) {
+               categoryData[record.year] = [];
+           }
+           var yearData = categoryData[record.year];
+           
+           yearData.push([record.month, record.count]);
+       });
+       
+       return newVisitData;
+   }
+   
+   function initSiteSelect() {
+       var siteSelect = $('.site-select');
+       
+       $.each(visitData, site => {
+           var option = $('<option/>')
+               .attr({value: site})
+               .html(site)
 
-            let numSites = 0;
-            $.each(siteData, function (name, dataEntry) {
-                dataEntry.sort(function (a, b) {
-                    return a[0] - b[0]
-                });
-                let dashedStartingTime = Number.MAX_SAFE_INTEGER;
-                if(dataEntry.length >= 2 && maxTime === dataEntry[dataEntry.length - 1][0])
-                {
-                    dashedStartingTime = dataEntry[dataEntry.length - 2][0]
-                }
-                chart.addSeries({
-                    name: name,
-                    data: dataEntry,
-                    zoneAxis: 'x',
-                    zones: [{
-                      value: dashedStartingTime
-                    }, {
-                      dashStyle: 'dot'
-                    }],
-                    events: {
-                        show: function () {
-                            setTimeout(function(){
-                                notTrigger = true;
-                                $(chart.series).each(function(index, series){
-                                    if(series.name === 'Overall Total')
-                                        this.setVisible(false, false);
-                                });
-                                chart.redraw();
-                                notTrigger = false;
-                            }, 1);
-                        }
-                    }
-                }, false);
-                numSites++;
-            });
+           siteSelect.append(option)
+       });
 
-            let totalDataPoints = [];
-            $.each(totalData, function (time, count) {
-                totalDataPoints.push([parseInt(time),count]);
-            });
-            totalDataPoints.sort(function (a, b) {
-                return a[0] - b[0]
-            });
+       siteSelect.change(() => {
+           const site = $('.site-select option:selected').val()
+           
+           initCategorySelect(site);
+       });
+   }
 
-            let medianDataPoints = [];
-            $.each(medianData, function (time, count_array) {
-                medianDataPoints.push([parseInt(time),median(count_array)]);
-            });
-            medianDataPoints.sort(function (a, b) {
-                return a[0] - b[0]
-            });
+   function initCategorySelect(site) {
+       var categorySelect = $('.category-select');
+       
+       categorySelect.empty()
 
-            let dashedStartingTime = Number.MAX_SAFE_INTEGER;
-            if(totalDataPoints.length >= 2 && maxTime === totalDataPoints[totalDataPoints.length - 1][0])
-            {
-                dashedStartingTime = totalDataPoints[totalDataPoints.length - 2][0]
-            }
+       $.each(visitData[site], category => {
+           var option = $('<option/>')
+               .attr({value: category})
+               .html(category);
+           
+           categorySelect.append(option);
+       });
 
-            let avgDataPoints = JSON.parse(JSON.stringify(totalDataPoints));
-            $.each(avgDataPoints, function(index, array){
-                array[1] = parseFloat((array[1] / numSites).toFixed(2));
-            });
+       categorySelect.change(() => {
+           const site = $('.site-select option:selected').val();
+           const category = $('.category-select option:selected')
+               .val();
+           
+           renderChart(site, category);
+       })
+   }
 
-            chart.addSeries({
-                name: 'Median',
-                data: medianDataPoints,
-                lineWidth: 5,
-                zoneAxis: 'x',
-                zones: [{
-                  value: dashedStartingTime
-                }, {
-                  dashStyle: 'dot'
-                }],
-                events: {
-                    show: function () {
-                        setTimeout(function(){
-                            notTrigger = true;
-                            $(chart.series).each(function(index, series){
-                                if(series.name === 'Overall Total')
-                                    this.setVisible(false, false);
-                            });
-                            chart.redraw();
-                            notTrigger = false;
-                        }, 1);
-                    }
-                }
-            }, false);
+   function renderChart(site, category) {
+       while(chart.series.length > 0) {
+           chart.series[0].remove(true);
+       }
 
-            chart.addSeries({
-                name: 'Average',
-                data: avgDataPoints,
-                lineWidth: 5,
-                zoneAxis: 'x',
-                zones: [{
-                  value: dashedStartingTime
-                }, {
-                  dashStyle: 'dot'
-                }],
-                events: {
-                    show: function () {
-                        setTimeout(function(){
-                            notTrigger = true;
-                            $(chart.series).each(function(index, series){
-                                if(series.name === 'Overall Total')
-                                    this.setVisible(false, false);
-                            });
-                            chart.redraw();
-                            notTrigger = false;
-                        }, 1);
-                    }
-                }
-            }, false);
+       $.each(visitData[site][category], (year, data) => {
+           console.log(year)
+           chart.addSeries({
+               name: year,
+               data: data
+           });
+       })
+   }
+   
+   // Kick everything off -- fetch the data, transform it, and save it
+   // to the global visitData object
+   $.getJSON("{{ url_for('chart.attendance') }}", rawVisitData => {
+       // Get the transformed data.
+       visitData = transformVisitData(rawVisitData);       
 
-            chart.addSeries({
-                name: 'Overall Total',
-                data: totalDataPoints,
-                color: 'black',
-                index: -1,
-                zoneAxis: 'x',
-                zones: [{
-                  value: dashedStartingTime
-                }, {
-                  dashStyle: 'dot'
-                }],
-                events: {
-                    hide: function () {
-                        if(notTrigger)
-                            return;
-                        setTimeout(function(){
-                            $(chart.series).each(function(index, series){
-                                if(series.name !== 'Overall Total')
-                                    this.setVisible(true, true);
-                            });
-                            chart.redraw();
-                        }, 1);
-                    },
-                    show: function () {
-                        setTimeout(function(){
-                            $(chart.series).each(function(index, series){
-                                if(series.name !== 'Overall Total')
-                                    this.setVisible(false, false);
-                            });
-                            chart.redraw();
-                        }, 1);
-                    }
-                }
-            }, false).setVisible(true,true);
+       initSiteSelect();
+   });
+   
 
-            chart.setSubtitle({
-                text: 'All ' + numSites + ' Sites Data'
-            });
 
-            chart.redraw();
-        }
-
-		function viewSite(name)
-        {
-            while(chart.series.length > 0)
-                chart.series[0].remove(true);
-
-            if(name === "ALL")
-                return viewAll();
-
-            let maxTime = 0;
-            let categoryData = {};
-            let sumData = {};
-            $.each(fullData[name], function (index, dataEntry) {
-                let category = dataEntry.category;
-                if(!categoryData[category])
-                {
-                    categoryData[category] = [];
-                }
-                let entryDateTime = new Date(dataEntry.year, parseInt(dataEntry.month, 10) - 1).getTime();
-                if(!sumData[entryDateTime])
-                {
-                    sumData[entryDateTime] = dataEntry.count;
-                }
-                else
-                {
-                    sumData[entryDateTime] += dataEntry.count;
-                }
-                if(entryDateTime > maxTime)
-                    maxTime = entryDateTime;
-                categoryData[category].push([entryDateTime, parseFloat((dataEntry.count).toFixed(2))]);
-            });
-
-            let sumDataPoints = [];
-            $.each(sumData, function (entryDateTime, count) {
-                sumDataPoints.push([parseInt(entryDateTime),count]);
-            });
-            sumDataPoints.sort(function (a, b) {
-                return a[0] - b[0]
-            });
-
-            $.each(categoryData, function (category, dataEntry) {
-                dataEntry.sort(function (a, b) {
-                    return a[0] - b[0]
-                });
-                let dashedStartingTime = Number.MAX_SAFE_INTEGER;
-                if(dataEntry.length >= 2 && maxTime === dataEntry[dataEntry.length - 1][0])
-                {
-                    dashedStartingTime = dataEntry[dataEntry.length - 2][0]
-                }
-                chart.addSeries({
-                    name: category,
-                    data: dataEntry,
-                    zoneAxis: 'x',
-                    zones: [{
-                      value: dashedStartingTime
-                    }, {
-                      dashStyle: 'dot'
-                    }],
-                    events: {
-                        show: function () {
-                            setTimeout(function(){
-                                notTrigger = true;
-                                $(chart.series).each(function(index, series){
-                                    if(series.name === 'Overall Total')
-                                        this.setVisible(false, false);
-                                });
-                                chart.redraw();
-                                notTrigger = false;
-                            }, 1);
-                        }
-                    }
-                }, false);
-            });
-
-            let dashedStartingTime = Number.MAX_SAFE_INTEGER;
-            if(sumDataPoints.length >= 2 && maxTime === sumDataPoints[sumDataPoints.length - 1][0])
-            {
-                dashedStartingTime = sumDataPoints[sumDataPoints.length - 2][0]
-            }
-
-            chart.addSeries({
-                name: 'Overall Total',
-                data: sumDataPoints,
-                color: 'black',
-                index: -1,
-                zoneAxis: 'x',
-                zones: [{
-                  value: dashedStartingTime
-                }, {
-                  dashStyle: 'dot'
-                }],
-                events: {
-                    hide: function () {
-                        if(notTrigger)
-                            return;
-                        setTimeout(function(){
-                            $(chart.series).each(function(index, series){
-                                if(series.name !== 'Overall Total')
-                                    this.setVisible(true, true);
-                            });
-                            chart.redraw();
-                        }, 1);
-                    },
-                    show: function () {
-                        setTimeout(function(){
-                            $(chart.series).each(function(index, series){
-                                if(series.name !== 'Overall Total')
-                                    this.setVisible(false, false);
-                            });
-                            chart.redraw();
-                        }, 1);
-                    }
-                }
-            }, false).setVisible(true,true);
-
-            chart.setSubtitle({
-                text: name + ' - ' + fullData[name].length + ' Data Entries'
-            });
-
-            chart.redraw();
-        }
-
-		function addData(data) {
-		    fullData = {};
-            chart = createChart();
-
-            var r = $('<option/>').attr({
-                 value: 'ALL',
-            }).html("ALL SITES");
-            $("#siteSelector").append(r);
-
-            $.each(data, function (index, val) {
-                let site = val.site;
-                if(!fullData[site])
-                {
-                    sites.push(site);
-                    fullData[site] = [];
-                     var r = $('<option/>').attr({
-                         value: site,
-                    }).html(site);
-                    $("#siteSelector").append(r);
-                }
-                fullData[val.site].push(val);
-            });
-
-            viewSite('ALL');
-		}
-
-        $.getJSON("{{ url_for('chart.attendance') }}", addData);
-
-		function createChart() {
-            chart = Highcharts.chart('chart', {
-                chart: {
-                    zoomType: 'x'
-                },
-
-                title: {
-                    text: 'MNHS Attendance Chart'
-                },
-
-                subtitle: {
-                    text: 'subtitle'
-                },
-
-                yAxis: {
-                    title: {
-                        text: 'Count'
-                    }
-                },
-                plotOptions: {
-                    series: {
-                        marker: {
-                            enabled: false
-                        }
-                    }
-                },
-
-                tooltip: {
-                    shared:true,
-                    crosshairs:true,
-                    valueDecimals: 0,
-                    xDateFormat: '%b %Y',
-                },
-
-                xAxis: {
-                    type: 'datetime',
-                    title: {
-                        text: 'Time'
-                    },
-                },
-
-                legend: {
-                    align: 'center',
-                    borderWidth: 0
-                },
-
-                series: [],
-
-                exporting: {
-                    showTable: true,
-                    csv:{
-                        dateFormat: '%b %Y',
-                        itemDelimiter: ';'
-                    },
-                },
-            });
-            return chart;
-	    }
-
-	    $("#siteSelector").change(function(){
-          viewSite(this.value);
-        });
-	</script>
+  </script>
 {% endblock %}
