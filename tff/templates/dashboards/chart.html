@@ -39,17 +39,17 @@
            if (!newVisitData[record.site]) {
                newVisitData[record.site] = {};
            }
-           var siteData = newVisitData[record.site];
+           let siteData = newVisitData[record.site];
            
            if (!siteData[record.category]) {
                siteData[record.category] = {};
            }
-           var categoryData = siteData[record.category]
+           let categoryData = siteData[record.category]
            
            if (!categoryData[record.year]) {
                categoryData[record.year] = [];
            }
-           var yearData = categoryData[record.year];
+           let yearData = categoryData[record.year];
            
            yearData.push([record.month, record.count]);
        });
@@ -58,10 +58,10 @@
    }
    
    function initSiteSelect() {
-       var siteSelect = $('.site-select');
+       let siteSelect = $('.site-select');
        
        $.each(visitData, site => {
-           var option = $('<option/>')
+           let option = $('<option/>')
                .attr({value: site})
                .html(site)
 
@@ -76,12 +76,12 @@
    }
 
    function initCategorySelect(site) {
-       var categorySelect = $('.category-select');
+       let categorySelect = $('.category-select');
        
        categorySelect.empty()
 
        $.each(visitData[site], category => {
-           var option = $('<option/>')
+           let option = $('<option/>')
                .attr({value: category})
                .html(category);
            
