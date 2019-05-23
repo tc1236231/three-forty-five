@@ -10,6 +10,9 @@
   <div id="chart" class="col-16" style="height: 550px;"></div>
   
   <script>
+   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug',
+                   'Sep', 'Oct', 'Nov', 'Dec', ];
+   
    var visitData = null;
 
    var chart = Highcharts.chart('chart', {
@@ -18,6 +21,12 @@
        },
        title: {
            text: 'YOY Attendance'
+       },
+       xAxis: {
+           type: 'category',
+           title: {
+               text: 'Month'
+           }
        },
        tooltip: {
            shared:true,
@@ -34,7 +43,7 @@
 
    function transformVisitData(rawVisitData) {
        newVisitData = {};
-       
+
        $.each(rawVisitData, (_, record) => {
            if (!newVisitData[record.site]) {
                newVisitData[record.site] = {};
@@ -45,13 +54,14 @@
                siteData[record.category] = {};
            }
            let categoryData = siteData[record.category]
-           
-           if (!categoryData[record.year]) {
-               categoryData[record.year] = [];
+
+           const fy = record.year + (record.month >= 7);
+           if (!categoryData[fy]) {
+               categoryData[fy] = [];
            }
-           let yearData = categoryData[record.year];
+           let yearData = categoryData[fy];
            
-           yearData.push([record.month, record.count]);
+           yearData.push([months[record.month - 1], record.count]);
        });
        
        return newVisitData;
@@ -59,7 +69,7 @@
    
    function initSiteSelect() {
        let siteSelect = $('.site-select');
-       
+
        $.each(visitData, site => {
            let option = $('<option/>')
                .attr({value: site})
@@ -69,17 +79,28 @@
        });
 
        siteSelect.change(() => {
-           const site = $('.site-select option:selected').val()
+           const site = getSiteSelection();
+
+           const validCategory = $.inArray(getCategorySelection(),
+                                           Object.keys(visitData[site]))
+           if (!validCategory)  {
+               initCategorySelect(site);
+           }
            
-           initCategorySelect(site);
+           renderChart();
        });
    }
 
-   function initCategorySelect(site) {
-       let categorySelect = $('.category-select');
-       
-       categorySelect.empty()
+   function getSiteSelection() {
+       return $('.site-select option:selected').val();
+   }
 
+   function initCategorySelect() {
+       const site = getSiteSelection();
+       const categorySelect = $('.category-select');
+
+       categorySelect.empty()
+       
        $.each(visitData[site], category => {
            let option = $('<option/>')
                .attr({value: category})
@@ -89,21 +110,23 @@
        });
 
        categorySelect.change(() => {
-           const site = $('.site-select option:selected').val();
-           const category = $('.category-select option:selected')
-               .val();
-           
-           renderChart(site, category);
+           renderChart();
        })
    }
 
-   function renderChart(site, category) {
+   function getCategorySelection() {
+       return $('.category-select option:selected').val();
+   }
+
+   function renderChart() {
+       const site = getSiteSelection();
+       const category = getCategorySelection();
+       
        while(chart.series.length > 0) {
            chart.series[0].remove(true);
        }
 
        $.each(visitData[site][category], (year, data) => {
-           console.log(year)
            chart.addSeries({
                name: year,
                data: data
@@ -111,13 +134,12 @@
        })
    }
    
-   // Kick everything off -- fetch the data, transform it, and save it
-   // to the global visitData object
+   // Kick things off
    $.getJSON("{{ url_for('chart.attendance') }}", rawVisitData => {
-       // Get the transformed data.
        visitData = transformVisitData(rawVisitData);       
-
        initSiteSelect();
+       initCategorySelect();
+       renderChart();
    });
    
 
