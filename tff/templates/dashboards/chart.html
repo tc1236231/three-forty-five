@@ -10,10 +10,12 @@
   <div id="chart" class="col-16" style="height: 550px;"></div>
   
   <script>
-   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug',
+   const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug',
                    'Sep', 'Oct', 'Nov', 'Dec', ];
-   
-   var visitData = null;
+
+
+   var visitData = {};
+   var siteTotals = {};
 
    var chart = Highcharts.chart('chart', {
        chart: {
@@ -41,14 +43,12 @@
    });
 
 
-   function transformVisitData(rawVisitData) {
-       newVisitData = {};
-
+   function readVisitData(rawVisitData) {
        $.each(rawVisitData, (_, record) => {
-           if (!newVisitData[record.site]) {
-               newVisitData[record.site] = {};
+           if (!visitData[record.site]) {
+               visitData[record.site] = {};
            }
-           let siteData = newVisitData[record.site];
+           let siteData = visitData[record.site];
            
            if (!siteData[record.category]) {
                siteData[record.category] = {};
@@ -61,10 +61,31 @@
            }
            let yearData = categoryData[fy];
            
-           yearData.push([months[record.month - 1], record.count]);
+           yearData.push([MONTHS[record.month - 1], record.count]);
        });
-       
-       return newVisitData;
+   }
+
+   function addSiteTotals() {
+       $.each(visitData, (_, siteData) => {
+           if (!siteData['Totals']) {
+               siteData['Totals'] = {};
+           }
+
+           $.each(siteData, (_, categoryData) => {
+               $.each(categoryData, (fy, fyData) => {
+                   if (!siteData['Totals'][fy]) {
+                       siteData['Totals'][fy] = [];
+                   }
+                   $.each(fyData, (i, record) => {
+                       if (!siteData['Totals'][fy][i]) {
+                           siteData['Totals'][fy][i] = [record[0], 0];
+                       }
+                       
+                       siteData['Totals'][fy][i][1] += record[1];
+                   });
+               });
+           });
+       });
    }
    
    function initSiteSelect() {
@@ -105,13 +126,15 @@
            let option = $('<option/>')
                .attr({value: category})
                .html(category);
-           
-           categorySelect.append(option);
+
+           if (category === 'Totals') {
+               categorySelect.prepend(option.prop('selected', true));
+           } else {
+               categorySelect.append(option);
+           }
        });
 
-       categorySelect.change(() => {
-           renderChart();
-       })
+       categorySelect.change(renderChart);
    }
 
    function getCategorySelection() {
@@ -125,18 +148,20 @@
        while(chart.series.length > 0) {
            chart.series[0].remove(true);
        }
-
+       
        $.each(visitData[site][category], (year, data) => {
            chart.addSeries({
                name: year,
                data: data
            });
        })
+       
    }
    
    // Kick things off
    $.getJSON("{{ url_for('chart.attendance') }}", rawVisitData => {
-       visitData = transformVisitData(rawVisitData);       
+       readVisitData(rawVisitData);
+       addSiteTotals();
        initSiteSelect();
        initCategorySelect();
        renderChart();
