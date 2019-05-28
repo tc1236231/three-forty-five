@@ -1,0 +1,173 @@
+{% block extra_head_scripts %}
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <script src="https://code.highcharts.com/modules/exporting.js"></script>
+  <script src="https://code.highcharts.com/modules/export-data.js"></script>
+{% endblock %}
+
+{% block main %}
+  <select class="site-select"></select>
+  <select class="category-select"></select>
+  <div id="chart" class="col-16" style="height: 550px;"></div>
+  
+  <script>
+   const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug',
+                   'Sep', 'Oct', 'Nov', 'Dec', ];
+
+
+   var visitData = {};
+   var siteTotals = {};
+
+   var chart = Highcharts.chart('chart', {
+       chart: {
+           type: 'spline'
+       },
+       title: {
+           text: 'YOY Attendance'
+       },
+       xAxis: {
+           type: 'category',
+           title: {
+               text: 'Month'
+           }
+       },
+       tooltip: {
+           shared:true,
+           crosshairs:true
+       },
+       exporting: {
+           showTable: true,
+           csv:{
+               itemDelimiter: ';'
+           },
+       }
+   });
+
+
+   function readVisitData(rawVisitData) {
+       $.each(rawVisitData, (_, record) => {
+           if (!visitData[record.site]) {
+               visitData[record.site] = {};
+           }
+           let siteData = visitData[record.site];
+           
+           if (!siteData[record.category]) {
+               siteData[record.category] = {};
+           }
+           let categoryData = siteData[record.category]
+
+           const fy = record.year + (record.month >= 7);
+           if (!categoryData[fy]) {
+               categoryData[fy] = [];
+           }
+           let yearData = categoryData[fy];
+           
+           yearData.push([MONTHS[record.month - 1], record.count]);
+       });
+   }
+
+   function addSiteTotals() {
+       $.each(visitData, (_, siteData) => {
+           if (!siteData['Totals']) {
+               siteData['Totals'] = {};
+           }
+
+           $.each(siteData, (_, categoryData) => {
+               $.each(categoryData, (fy, fyData) => {
+                   if (!siteData['Totals'][fy]) {
+                       siteData['Totals'][fy] = [];
+                   }
+                   $.each(fyData, (i, record) => {
+                       if (!siteData['Totals'][fy][i]) {
+                           siteData['Totals'][fy][i] = [record[0], 0];
+                       }
+                       
+                       siteData['Totals'][fy][i][1] += record[1];
+                   });
+               });
+           });
+       });
+   }
+   
+   function initSiteSelect() {
+       let siteSelect = $('.site-select');
+
+       $.each(visitData, site => {
+           let option = $('<option/>')
+               .attr({value: site})
+               .html(site)
+
+           siteSelect.append(option)
+       });
+
+       siteSelect.change(() => {
+           const site = getSiteSelection();
+
+           const validCategory = $.inArray(getCategorySelection(),
+                                           Object.keys(visitData[site]))
+           if (!validCategory)  {
+               initCategorySelect(site);
+           }
+           
+           renderChart();
+       });
+   }
+
+   function getSiteSelection() {
+       return $('.site-select option:selected').val();
+   }
+
+   function initCategorySelect() {
+       const site = getSiteSelection();
+       const categorySelect = $('.category-select');
+
+       categorySelect.empty()
+       
+       $.each(visitData[site], category => {
+           let option = $('<option/>')
+               .attr({value: category})
+               .html(category);
+
+           if (category === 'Totals') {
+               categorySelect.prepend(option.prop('selected', true));
+           } else {
+               categorySelect.append(option);
+           }
+       });
+
+       categorySelect.change(renderChart);
+   }
+
+   function getCategorySelection() {
+       return $('.category-select option:selected').val();
+   }
+
+   function renderChart() {
+       const site = getSiteSelection();
+       const category = getCategorySelection();
+       
+       while(chart.series.length > 0) {
+           chart.series[0].remove(true);
+       }
+       
+       $.each(visitData[site][category], (year, data) => {
+           chart.addSeries({
+               name: year,
+               data: data
+           });
+       })
+       
+   }
+   
+   // Kick things off
+   $.getJSON("{{ url_for('chart.attendance') }}", rawVisitData => {
+       readVisitData(rawVisitData);
+       addSiteTotals();
+       initSiteSelect();
+       initCategorySelect();
+       renderChart();
+   });
+   
+
+
+  </script>
+{% endblock %}

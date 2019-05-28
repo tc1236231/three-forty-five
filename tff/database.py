@@ -16,7 +16,7 @@ def add_tags():
         Tag(name='Sales'),
         Tag(name='Membership'),
         Tag(name='MHC'),
-        Tag(name='Attendance'),        
+        Tag(name='Attendance'),
     ])
 
     db.session.commit()
@@ -24,6 +24,18 @@ def add_tags():
 
 def add_articles():
     db.session.add_all([
+        FeaturedArticle(
+            slug='attendance-yoy',
+            title='Year-Over-Year Attendance Dashboard',
+            date=dt.date(2019, 5, 28),
+            description='Compare attendance totals to past years.',
+            file_path='chart_yoy.html',
+            img='img/analysis-increase-graph-statistic-512.png',
+            tags=[
+                get_tag('Dashboard'),
+                get_tag('Attendance'),
+            ]
+        ),
         FeaturedArticle(
             slug='attendance',
             title='Attendance Dashboard',
@@ -48,7 +60,7 @@ def add_articles():
                 get_tag('MHC'),
             ]
         ),
-        FeaturedArticle(
+        Article(
             slug='mbr-att-ren-analysis.html',
             title='Member Renewal and Attendance Analysis',
             date=dt.date(2019, 3, 15),
