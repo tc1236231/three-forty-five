@@ -14,9 +14,9 @@ def index():
 
 @blueprint.route('/attendance')
 def attendance():
-    url = "http://api/monthly-attendance"
+    url = "https://34.66.87.38/attendance"
     try:
-        res = requests.get(url)
+        res = requests.get(url, verify=False)
         return jsonify(res.json())
     except:
         return jsonify('something went wrong'), 500

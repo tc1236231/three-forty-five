@@ -9,7 +9,7 @@ from tff.exceptions import InvalidUsage
 
 from tff.db import db
 from tff.database import init_db
-from tff import blog, chart
+from tff import blog, chart, dashboard
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
@@ -27,6 +27,7 @@ def register_blueprints(app):
     """Register Flask blueprints."""
     app.register_blueprint(blog.blueprint)
     app.register_blueprint(chart.blueprint)
+    app.register_blueprint(dashboard.blueprint)
 
 
 register_blueprints(app)
