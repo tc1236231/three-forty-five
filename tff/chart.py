@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, jsonify
-from tff.exceptions import InvalidUsage
-import requests
+from google.cloud import bigquery
 
 blueprint = Blueprint('chart', __name__)
 
@@ -14,9 +13,26 @@ def index():
 
 @blueprint.route('/attendance')
 def attendance():
-    url = "https://34.66.87.38/attendance"
+    client = bigquery.Client()
+
+    # Perform a query.
+    QUERY = (
+        'SELECT * FROM `mnhs-dw-prod.dw.visits_monthly_view` '
+         )
+
     try:
-        res = requests.get(url, verify=False)
-        return jsonify(res.json())
-    except:
-        return jsonify('something went wrong'), 500
+        query_job = client.query(QUERY)  # API request
+        rows = query_job.result()  # Waits for query to finish
+        total = []
+        for row in rows:
+            data = {}
+            data['site'] = row.site_name
+            data['category'] = row.category_name
+            data['count'] = row.count
+            data['month'] = row.month
+            data['year'] = row.year
+            total.append(data)
+
+        return jsonify(total)
+    except Exception as e:
+        return jsonify('Error: ' + str(e)), 500
