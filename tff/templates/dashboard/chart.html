@@ -7,14 +7,19 @@
 {% endblock %}
 {% block main %}
   <div class="row">
-    <div class="col-2">
+    <div class="col-2 my-auto">
       <label for="siteSelector">Please select a site:</label>
     </div>
-    <div class="col-10">
+    <div class="col-10 my-auto">
       <select class="form-control" id="siteSelector">
       </select>
     </div>
   </div>
+    <div class="row">
+        <p class="col-12">
+            A detailed explanation on attendance categories can be found <a target="_blank" href="https://docs.google.com/document/d/1z1zADs98XaGECbF1QWoJpUyMhbu-q_fWmQAYuzLqZDk/edit?usp=sharing">here</a>
+        </p>
+    </div>
   <div class="p-1">
       <div id="chart" class="col-12" style="height: 550px;"></div>
   </div>
