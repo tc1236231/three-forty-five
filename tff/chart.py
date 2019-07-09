@@ -17,7 +17,7 @@ def attendance():
 
     # Perform a query.
     QUERY = (
-        'SELECT * FROM `mnhs-dw-prod.dw.visits_monthly_view` '
+        'SELECT * FROM `mnhs-dw-prod.dw.visits_monthly_full_padded_view` '
          )
 
     try:
