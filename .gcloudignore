@@ -16,6 +16,7 @@
 .DS_Store
 .ebextensions
 .idea
+mnhs-dw-prod-*.json
 
 # Python pycache:
 __pycache__/
