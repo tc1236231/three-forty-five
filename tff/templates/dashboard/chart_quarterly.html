@@ -49,7 +49,7 @@
            let sumData = {};
            $.each(dataEntry, function(key, val)
            {
-               let entryDateTime = new Date(val.year, parseInt(val.month, 10) - 1).getTime();
+               let entryDateTime = new Date(val.date).getTime();
                if(!sumData[entryDateTime])
                {
                    sumData[entryDateTime] = val.count;
@@ -248,7 +248,7 @@
            {
                categoryData[category] = [];
            }
-           let entryDateTime = new Date(dataEntry.year, parseInt(dataEntry.month, 10) - 1).getTime();
+           let entryDateTime = new Date(dataEntry.date).getTime();
            if(!sumData[entryDateTime])
            {
                sumData[entryDateTime] = dataEntry.count;
@@ -378,9 +378,18 @@
        viewSite('ALL');
    }
 
-   $.getJSON("{{ url_for('chart.attendance_monthly') }}", addData);
+   $.getJSON("{{ url_for('chart.attendance_quarterly') }}", addData);
 
    function createChart() {
+        Highcharts.dateFormats = {
+            q: function (timestamp) {
+                var date = new Date(timestamp),
+                quarter = (Math.floor(date.getUTCMonth() / 3) + 1) - 2;
+                if(quarter <= 0)
+                    quarter += 4;
+                return quarter;
+            }
+        };
        chart = Highcharts.chart('chart', {
            chart: {
                zoomType: 'x',
@@ -411,7 +420,7 @@
                shared:true,
                crosshairs:true,
                valueDecimals: 0,
-               xDateFormat: '%b %Y',
+               xDateFormat: 'Q%q %Y',
            },
 
            xAxis: {
@@ -419,6 +428,10 @@
                title: {
                    text: 'Time'
                },
+                labels: {
+                    format: '{value:Q%q\'%y}',
+                    rotation: -30
+                }
            },
 
            legend: {
@@ -431,7 +444,7 @@
            exporting: {
                showTable: true,
                csv:{
-                   dateFormat: '%b %Y',
+                   dateFormat: 'Q%q %Y',
                    itemDelimiter: ';'
                },
            },

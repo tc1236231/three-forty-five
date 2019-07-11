@@ -7,11 +7,10 @@ from tff.exceptions import InvalidUsage
 from tff.model import Article, FeaturedArticle, Tag, article_tag
 from flask_sqlalchemy import sqlalchemy
 
-blueprint = Blueprint('blog', __name__)
+blueprint = Blueprint('blog', __name__, url_prefix='/deprecated')
 
 
-@blueprint.route('/')
-@blueprint.route('/index')
+@blueprint.route('/blog')
 def index():
     return render_template(
         'index.html',

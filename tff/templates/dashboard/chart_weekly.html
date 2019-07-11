@@ -49,7 +49,7 @@
            let sumData = {};
            $.each(dataEntry, function(key, val)
            {
-               let entryDateTime = new Date(val.year, parseInt(val.month, 10) - 1).getTime();
+               let entryDateTime = new Date(val.date).getTime();
                if(!sumData[entryDateTime])
                {
                    sumData[entryDateTime] = val.count;
@@ -248,7 +248,7 @@
            {
                categoryData[category] = [];
            }
-           let entryDateTime = new Date(dataEntry.year, parseInt(dataEntry.month, 10) - 1).getTime();
+           let entryDateTime = new Date(dataEntry.date).getTime();
            if(!sumData[entryDateTime])
            {
                sumData[entryDateTime] = dataEntry.count;
@@ -378,7 +378,7 @@
        viewSite('ALL');
    }
 
-   $.getJSON("{{ url_for('chart.attendance_monthly') }}", addData);
+   $.getJSON("{{ url_for('chart.attendance_weekly') }}", addData);
 
    function createChart() {
        chart = Highcharts.chart('chart', {
@@ -411,13 +411,13 @@
                shared:true,
                crosshairs:true,
                valueDecimals: 0,
-               xDateFormat: '%b %Y',
+               xDateFormat: '%d %b %Y',
            },
 
            xAxis: {
                type: 'datetime',
                title: {
-                   text: 'Time'
+                   text: 'Time (Starting Date of the Week)'
                },
            },
 
@@ -431,7 +431,7 @@
            exporting: {
                showTable: true,
                csv:{
-                   dateFormat: '%b %Y',
+                   dateFormat: '%d %b %Y',
                    itemDelimiter: ';'
                },
            },

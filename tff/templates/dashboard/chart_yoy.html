@@ -29,7 +29,7 @@
            type: 'spline'
        },
        title: {
-           text: 'YOY Attendance'
+           text: 'Year Over Year Attendance'
        },
        xAxis: {
            type: 'category',
@@ -166,7 +166,7 @@
    }
    
    // Kick things off
-   $.getJSON("{{ url_for('chart.attendance') }}", rawVisitData => {
+   $.getJSON("{{ url_for('chart.attendance_monthly') }}", rawVisitData => {
        readVisitData(rawVisitData);
        addSiteTotals();
        initSiteSelect();

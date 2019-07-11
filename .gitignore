@@ -7,4 +7,4 @@ tff.egg-info/
 __pycache__
 venv/
 docker-compose.override.yml
-mnhs-dw-prod-*.json
+mnhs-dw-*.json
