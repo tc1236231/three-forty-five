@@ -63,7 +63,6 @@
 
    function viewAll()
    {
-       chart.showLoading();
        let maxTime = 0;
        let siteData = {};
        let totalData = {};
@@ -267,7 +266,6 @@
        if(name === "ALL")
            return viewAll();
 
-       chart.showLoading();
        let maxTime = 0;
        let categoryData = {};
        let sumData = {};
@@ -414,7 +412,7 @@
        }
 
        createChart(chartCustomConfig);
-       chart.showLoading();
+       chart.showLoading('<div class="my-auto"><img src="{{ url_for('static', filename='assets/img/Loading_icon.gif') }}"><h3>Loading Data...</h3></div');
 
        if(!reloadData && Object.keys(rawData).length !== 0)
        {
