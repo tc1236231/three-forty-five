@@ -37,7 +37,6 @@
 
    function viewAll()
    {
-       chart.showLoading();
        let maxTime = 0;
        let siteData = {};
        let totalData = {};
@@ -50,7 +49,7 @@
            let sumData = {};
            $.each(dataEntry, function(key, val)
            {
-               let entryDateTime = new Date(val.date).getTime();
+               let entryDateTime = new Date(val.year, 8).getTime();
                if(!sumData[entryDateTime])
                {
                    sumData[entryDateTime] = val.count;
@@ -145,11 +144,13 @@
            data: medianDataPoints,
            lineWidth: 5,
            zoneAxis: 'x',
+           /*
            zones: [{
                value: dashedStartingTime
            }, {
                dashStyle: 'dot'
            }],
+           */
            events: {
                show: function () {
                    setTimeout(function(){
@@ -170,11 +171,13 @@
            data: avgDataPoints,
            lineWidth: 5,
            zoneAxis: 'x',
+           /*
            zones: [{
                value: dashedStartingTime
            }, {
                dashStyle: 'dot'
            }],
+           */
            events: {
                show: function () {
                    setTimeout(function(){
@@ -196,11 +199,13 @@
            color: 'black',
            index: -1,
            zoneAxis: 'x',
+           /*
            zones: [{
                value: dashedStartingTime
            }, {
                dashStyle: 'dot'
            }],
+           */
            events: {
                hide: function () {
                    if(notTrigger)
@@ -230,7 +235,6 @@
        });
 
        chart.redraw();
-       chart.hideLoading();
    }
 
    function viewSite(name)
@@ -241,7 +245,6 @@
        if(name === "ALL")
            return viewAll();
 
-       chart.showLoading();
        let maxTime = 0;
        let categoryData = {};
        let sumData = {};
@@ -251,7 +254,7 @@
            {
                categoryData[category] = [];
            }
-           let entryDateTime = new Date(dataEntry.date).getTime();
+           let entryDateTime = new Date(dataEntry.year, 8).getTime();
            if(!sumData[entryDateTime])
            {
                sumData[entryDateTime] = dataEntry.count;
@@ -353,11 +356,11 @@
        });
 
        chart.redraw();
-       chart.hideLoading();
    }
 
    function addData(data) {
        fullData = {};
+       chart = createChart();
 
        var r = $('<option/>').attr({
            value: 'ALL',
@@ -381,13 +384,10 @@
        viewSite('ALL');
    }
 
-   chart = createChart();
-   chart.showLoading();
-
-   $.getJSON("{{ url_for('chart.attendance_daily') }}", addData);
+   $.getJSON("{{ url_for('chart.attendance_yearly') }}", addData);
 
    function createChart() {
-       let chart = Highcharts.chart('chart', {
+       chart = Highcharts.chart('chart', {
            chart: {
                zoomType: 'x',
            },
@@ -417,7 +417,7 @@
                shared:true,
                crosshairs:true,
                valueDecimals: 0,
-               xDateFormat: '%d %b %Y',
+               xDateFormat: '%Y',
            },
 
            xAxis: {
@@ -437,7 +437,7 @@
            exporting: {
                showTable: true,
                csv:{
-                   dateFormat: '%d %b %Y',
+                   dateFormat: '%Y',
                    itemDelimiter: ';'
                },
            },

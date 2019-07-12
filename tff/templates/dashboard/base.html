@@ -7,7 +7,7 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='assets/img/favicon.png') }}">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <title>
-    MNHS Business Intelligence & Process Improvement
+        MNHS Business Intelligence & Process Improvement
     </title>
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
     <!--     Fonts and icons     -->
@@ -22,64 +22,15 @@
 
 <body class="">
   <div class="wrapper ">
-    <div class="sidebar" data-color="orange" data-background-color="black">
-      <!--
-        Tip 1: You can change the color of the sidebar using: data-color="purple | azure | green | orange | danger"
-
-        Tip 2: you can also add an image using data-image tag
-    -->
-      <div class="logo">
-        <a href="{{ url_for('dashboard.index') }}" class="simple-text logo-normal w-75 mx-auto">
-          <img class="img-fluid" src="{{ url_for('static', filename='mnhs_logo_w.png') }}"><
-        </a>
-      </div>
-      <div class="sidebar-wrapper">
-        <ul class="nav">
-          <li class="nav-item " id="dashboard.index">
-            <a class="nav-link" href="{{ url_for('dashboard.index') }}">
-              <i class="material-icons">multiline_chart</i>
-              <p>Monthly Chart</p>
-            </a>
-          </li>
-          <li class="nav-item " id="dashboard.yoy">
-            <a class="nav-link" href="{{ url_for('dashboard.yoy') }}">
-              <i class="material-icons">multiline_chart</i>
-              <p>Year Over Year</p>
-            </a>
-          </li>
-          <li class="nav-item " id="dashboard.daily">
-            <a class="nav-link" href="{{ url_for('dashboard.daily') }}">
-              <i class="material-icons">multiline_chart</i>
-              <p>Daily Chart</p>
-            </a>
-          </li>
-            <li class="nav-item " id="dashboard.weekly">
-                <a class="nav-link" href="{{ url_for('dashboard.weekly') }}">
-                  <i class="material-icons">multiline_chart</i>
-                  <p>Weekly Chart</p>
-                </a>
-            </li>
-            <li class="nav-item " id="dashboard.quarterly">
-                <a class="nav-link" href="{{ url_for('dashboard.quarterly') }}">
-                  <i class="material-icons">multiline_chart</i>
-                  <p>Quarterly Chart</p>
-                </a>
-            </li>
-            <li class="nav-item " id="dashboard.yearly">
-                <a class="nav-link" href="{{ url_for('dashboard.yearly') }}">
-                  <i class="material-icons">multiline_chart</i>
-                  <p>Yearly Chart</p>
-                </a>
-            </li>
-        </ul>
-      </div>
-    </div>
+    {% include "dashboard/components/sidebar.html" %}
     <div class="main-panel">
       <!-- Navbar -->
       <nav class="navbar navbar-expand-lg navbar-transparent navbar-absolute fixed-top ">
         <div class="container-fluid">
           <div class="navbar-wrapper">
-            <a class="navbar-brand" href="#">Dashboard</a>
+            <a class="navbar-brand">
+                {% block subtitle %}Dashboard{% endblock %}
+            </a>
           </div>
           <button class="navbar-toggler" type="button" data-toggle="collapse" aria-controls="navigation-index" aria-expanded="false" aria-label="Toggle navigation">
             <span class="sr-only">Toggle navigation</span>
@@ -137,21 +88,7 @@
           </div>
         </div>
       </div>
-      <footer class="footer">
-        <div class="container-fluid">
-          <nav class="float-left">
-            <ul>
-            </ul>
-          </nav>
-          <div class="copyright float-right">
-            &copy;
-            <script>
-              document.write(new Date().getFullYear())
-            </script>,
-            <a>Minnesota Historical Society Business Intelligence & Process Improvement</a> Template from Creative Tim.
-          </div>
-        </div>
-      </footer>
+        {% include "dashboard/components/footer.html" %}
     </div>
   </div>
   <!--   Core JS Files   -->
@@ -364,8 +301,7 @@
     });
   </script>
     <script>
-    $(document).ready(function () {
-    $("li[id='{{request.endpoint}}']").addClass("active"); })
+        $(document).ready(function () {$("li[id='{{request.endpoint}}']").addClass("active"); })
     </script>
 </body>
 
