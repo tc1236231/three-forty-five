@@ -10,7 +10,7 @@
   <select class="site-select"></select>
   <select class="category-select"></select>
     <div class="row">
-        <h3 class="col-4 badge badge-info text-wrap mx-auto my-3 p-2" style="font-size: 1em">
+        <h3 class="col-4 badge badge-info text-wrap mx-auto my-3 p-2" style="white-space: normal; font-size: 1em">
             A detailed explanation on attendance categories can be found <a target="_blank" href="https://docs.google.com/document/d/1z1zADs98XaGECbF1QWoJpUyMhbu-q_fWmQAYuzLqZDk/edit?usp=sharing">here</a>
         </h3>
     </div>
@@ -48,6 +48,7 @@
            },
        }
    });
+   chart.showLoading('<div class="my-auto"><img src="{{ url_for('static', filename='assets/img/Loading_icon.gif') }}"><h3>Loading Data...</h3></div');
 
 
    function readVisitData(rawVisitData) {
@@ -172,6 +173,7 @@
        initSiteSelect();
        initCategorySelect();
        renderChart();
+       chart.hideLoading();
    });
    
 
