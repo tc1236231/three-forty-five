@@ -10,7 +10,7 @@
   <select class="site-select"></select>
   <select class="category-select"></select>
     <div class="row">
-        <h3 class="col-4 badge badge-info text-wrap mx-auto my-3 p-2" style="white-space: normal; font-size: 1em">
+        <h3 class="col-4 badge badge-info text-center mx-auto my-3 p-2" style="white-space: normal; font-size: 1em">
             A detailed explanation on attendance categories can be found <a target="_blank" href="https://docs.google.com/document/d/1z1zADs98XaGECbF1QWoJpUyMhbu-q_fWmQAYuzLqZDk/edit?usp=sharing">here</a>
         </h3>
     </div>
@@ -61,15 +61,16 @@
            if (!siteData[record.category]) {
                siteData[record.category] = {};
            }
-           let categoryData = siteData[record.category]
+           let categoryData = siteData[record.category];
+           let data_date = new Date(record.date);
 
-           const fy = record.year + (record.month >= 7);
+           let fy = data_date.getUTCFullYear() + (data_date.getUTCMonth() >= (7-1));
            if (!categoryData[fy]) {
                categoryData[fy] = [];
            }
            let yearData = categoryData[fy];
            
-           yearData.push([MONTHS[record.month - 1], record.count]);
+           yearData.push([MONTHS[data_date.getUTCMonth()], record.count]);
        });
    }
 
@@ -167,7 +168,7 @@
    }
    
    // Kick things off
-   $.getJSON("{{ url_for('chart.attendance_monthly') }}", rawVisitData => {
+   $.getJSON("{{ url_for('chart.attendance', mode="monthly") }}", rawVisitData => {
        readVisitData(rawVisitData);
        addSiteTotals();
        initSiteSelect();
