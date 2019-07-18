@@ -15,3 +15,10 @@ def yoy():
     return render_template(
         '/dashboard/chart_yoy.html'
     )
+
+
+@blueprint.route('/dashboard/hourly')
+def hourly():
+    return render_template(
+        '/dashboard/chart_hourly.html'
+    )

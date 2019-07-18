@@ -1,0 +1,34 @@
+{% extends "dashboard/base.html" %}
+
+{% block extra_head_scripts %}
+
+{% endblock %}
+
+{% block subtitle %}Hourly Attendance Dashboard{% endblock %}
+
+{% block main %}
+    <div class="row">
+        <div class="col-2 my-auto">
+          <label for="siteSelector">Please select a site:</label>
+        </div>
+        <div class="col-3 my-auto">
+          <select class="form-control" id="siteSelector">
+          </select>
+        </div>
+        <div class="col-2 my-auto">
+          <label for="siteSelector">Please select a time frame:</label>
+        </div>
+        <div class="col-2 my-auto">
+          <select class="form-control" id="siteSelector">
+          </select>
+        </div>
+        ~
+        <div class="col-2 my-auto">
+          <select class="form-control" id="siteSelector">
+          </select>
+        </div>
+    </div>
+    <div class="row">
+        <img class="w-100 mx-auto p-3 col-4" src="{{ url_for('chart.display') }}" />
+    </div>
+{% endblock %}
