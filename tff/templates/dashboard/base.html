@@ -270,6 +270,8 @@
     <script>
         $(document).ready(function () {$("li[id='{{request.endpoint}}']").addClass("active"); })
     </script>
+    {% block script %}
+    {% endblock %}
 </body>
 
 </html>

@@ -2,6 +2,7 @@
 
 {% block extra_head_scripts %}
   <script src="https://code.highcharts.com/highcharts.js"></script>
+  <script src="https://code.highcharts.com/modules/boost.js"></script>
   <script src="https://code.highcharts.com/modules/exporting.js"></script>
   <script src="https://code.highcharts.com/modules/export-data.js"></script>
   <link href="{{ url_for('static', filename='highcharts-data-table.css') }}" rel="stylesheet" />
@@ -14,7 +15,7 @@
     <div class="col-2 my-auto">
       <label for="siteSelector">Please select a site:</label>
     </div>
-    <div class="col-10 my-auto">
+    <div class="col-4 my-auto">
       <select class="form-control" id="siteSelector">
       </select>
     </div>
@@ -23,7 +24,7 @@
     <div class="col-2 my-auto">
       <label for="siteSelector">Please select a view setting:</label>
     </div>
-    <div class="col-5 my-auto">
+    <div class="col-4 my-auto">
       <select class="form-control" id="timeSelector">
           <option value="daily">Daily</option>
           <option value="weekly">Weekly</option>
@@ -32,7 +33,7 @@
           <option value="yearly">Yearly</option>
       </select>
     </div>
-    <div class="col-5 my-auto">
+    <div class="col-4 my-auto">
       <select class="form-control" id="viewSelector">
           <option value="line">Line View</option>
           <option value="column">Column View</option>
@@ -40,11 +41,10 @@
       </select>
     </div>
   </div>
-    <div class="row">
-        <h3 class="col-4 badge badge-info mx-auto my-3 p-2 text-justify text-center" style="white-space: normal; font-size: 1em">
-            A detailed explanation on attendance categories can be found <a target="_blank" href="https://docs.google.com/document/d/1z1zADs98XaGECbF1QWoJpUyMhbu-q_fWmQAYuzLqZDk/edit?usp=sharing">here</a>
-        </h3>
+    <div class="row text-danger mt-3">
+        <h6 class="col-12 text-center" id="warning-message"></h6>
     </div>
+    {% include "dashboard/components/userguide.html" %}
   <div class="p-1">
       <div id="chart" class="col-12" style="height: 550px;"></div>
   </div>
@@ -388,15 +388,18 @@
        }
 
        $("#siteSelector").html('');
+       $('#warning-message').html('');
 
        chartCustomConfig = {timeFormat: '%b %Y', xAxisTitle: 'Time', viewType: viewMode};
        switch (timeMode) {
            case 'daily':
                chartCustomConfig.timeFormat = '%d %b %Y';
+               $('#warning-message').html('Daily data only includes Tessitura and Artifax data, visits reported by site managers are not included.');
                break;
            case 'weekly':
                chartCustomConfig.timeFormat = '%d %b %Y';
                chartCustomConfig.xAxisTitle = 'Time (Start Date of the Week)';
+               $('#warning-message').html('Weekly data only includes Tessitura and Artifax data, visits reported by site managers are not included.');
                break;
            case 'monthly':
               chartCustomConfig.timeFormat = '%b %Y';

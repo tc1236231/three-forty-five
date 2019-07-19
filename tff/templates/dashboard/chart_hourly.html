@@ -15,20 +15,36 @@
           <select class="form-control" id="siteSelector">
           </select>
         </div>
+    </div>
+    <div class="row">
         <div class="col-2 my-auto">
           <label for="siteSelector">Please select a time frame:</label>
         </div>
         <div class="col-2 my-auto">
-          <select class="form-control" id="siteSelector">
-          </select>
+            <div class="form-group">
+                <div class='input-group date'>
+                    <input type='text' class="form-control" id='datetimepicker1'/>
+                </div>
+            </div>
         </div>
-        ~
+        <div class="my-auto">~</div>
         <div class="col-2 my-auto">
-          <select class="form-control" id="siteSelector">
-          </select>
+            <div class="form-group">
+                <div class='input-group date'>
+                    <input type='text' class="form-control" id='datetimepicker2'/>
+                </div>
+            </div>
         </div>
     </div>
     <div class="row">
         <img class="w-100 mx-auto p-3 col-4" src="{{ url_for('chart.display') }}" />
     </div>
+{% endblock %}
+{% block script %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        $('#datetimepicker1').flatpickr();
+        $('#datetimepicker2').flatpickr();
+    </script>
 {% endblock %}
