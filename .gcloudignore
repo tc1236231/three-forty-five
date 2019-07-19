@@ -16,9 +16,12 @@
 .DS_Store
 .ebextensions
 .idea
-mnhs-dw-prod-*.json
+mnhs-dw-*.json
 
 # Python pycache:
 __pycache__/
 # Ignored by the build system
 /setup.cfg
+
+Dockerfile
+docker-*.yml

@@ -1,5 +1,7 @@
 runtime: python37
 
+instance_class: F4
+
 handlers:
 - url: /tff/static
   static_dir: static

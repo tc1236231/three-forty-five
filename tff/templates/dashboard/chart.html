@@ -28,14 +28,14 @@
       <select class="form-control" id="timeSelector">
           <option value="daily">Daily</option>
           <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
+          <option value="monthly" selected>Monthly</option>
           <option value="quarterly">Quarterly</option>
           <option value="yearly">Yearly</option>
       </select>
     </div>
     <div class="col-4 my-auto">
       <select class="form-control" id="viewSelector">
-          <option value="line">Line View</option>
+          <option value="line" selected>Line View</option>
           <option value="column">Column View</option>
           <option value="spline">Spline View</option>
       </select>
@@ -453,7 +453,7 @@
        viewSite('ALL');
    }
 
-   viewChart('daily', 'line');
+   viewChart('monthly', 'line');
 
    function createChart(config) {
         Highcharts.dateFormats = {
