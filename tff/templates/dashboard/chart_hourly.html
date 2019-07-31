@@ -1,7 +1,11 @@
 {% extends "dashboard/base.html" %}
 
 {% block extra_head_scripts %}
-
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <script src="https://code.highcharts.com/modules/boost.js"></script>
+  <script src="https://code.highcharts.com/modules/exporting.js"></script>
+  <script src="https://code.highcharts.com/modules/export-data.js"></script>
+  <link href="{{ url_for('static', filename='highcharts-data-table.css') }}" rel="stylesheet" />
 {% endblock %}
 
 {% block subtitle %}Hourly Attendance Dashboard{% endblock %}
@@ -20,31 +24,326 @@
         <div class="col-2 my-auto">
           <label for="siteSelector">Please select a time frame:</label>
         </div>
+        <div class="my-auto">
+            <label for="siteSelector">Day Of Week:</label>
+        </div>
         <div class="col-2 my-auto">
             <div class="form-group">
-                <div class='input-group date'>
-                    <input type='text' class="form-control" id='datetimepicker1'/>
+                <div class='input-group'>
+                  <select class="form-control" id="daySelector">
+                      <option value="1">Sunday</option>
+                      <option value="2">Monday</option>
+                      <option value="3">Tuesday</option>
+                      <option value="4">Wednesday</option>
+                      <option value="5">Thursday</option>
+                      <option value="6">Friday</option>
+                      <option value="7">Saturday</option>
+                  </select>
                 </div>
             </div>
         </div>
-        <div class="my-auto">~</div>
+        <div class="my-auto">
+            <label for="siteSelector">Year:</label>
+        </div>
         <div class="col-2 my-auto">
             <div class="form-group">
-                <div class='input-group date'>
-                    <input type='text' class="form-control" id='datetimepicker2'/>
+                <div class='input-group'>
+                  <select class="form-control" id="yearSelector">
+                      <option value="2017">2017</option>
+                      <option value="2018">2018</option>
+                      <option value="2019">2019</option>
+                  </select>
                 </div>
             </div>
         </div>
     </div>
-    <div class="row">
-        <img class="w-100 mx-auto p-3 col-4" src="{{ url_for('chart.display') }}" />
+    <div class="p-1">
+        <div id="chart" class="col-12" style="height: 550px;"></div>
     </div>
+    <script>
+        var chart = undefined;
+        var sites = [];
+        var rawData = {};
+        var fullData = {};
+        var notTrigger = false;
+
+        function viewSite(name, viewYear, viewDayOfWeek)
+        {
+           while(chart.series.length > 0)
+               chart.series[0].remove(true);
+
+           let maxTime = 0;
+           let categoryData = {};
+           let sumData = {};
+           $.each(fullData[name], function (index, dataEntry) {
+               let category = dataEntry.category;
+               if(!categoryData[category])
+               {
+                   categoryData[category] = [];
+               }
+               let entryDate = new Date(dataEntry.year, 1, dataEntry.dayofweek, dataEntry.hour);
+               let entryDateTime = entryDate.getTime();
+               if(!sumData[entryDateTime])
+               {
+                   sumData[entryDateTime] = dataEntry.count;
+               }
+               else
+               {
+                   sumData[entryDateTime] += dataEntry.count;
+               }
+               if(entryDateTime > maxTime)
+                   maxTime = entryDateTime;
+               categoryData[category].push([entryDateTime, parseFloat((dataEntry.count).toFixed(2))]);
+           });
+
+           let sumDataPoints = [];
+           $.each(sumData, function (entryDateTime, count) {
+               sumDataPoints.push([parseInt(entryDateTime),count]);
+           });
+           sumDataPoints.sort(function (a, b) {
+               return a[0] - b[0]
+           });
+           sumDataPoints = sumDataPoints.filter(ent => {let d = new Date(); d.setTime(ent[0]); return d.getFullYear() == viewYear && d.getDate() == viewDayOfWeek});
+           $.each(categoryData, function (category, dataEntry) {
+               dataEntry.sort(function (a, b) {
+                   return a[0] - b[0]
+               });
+               let chartData = dataEntry.filter(ent => {let d = new Date(); d.setTime(ent[0]); return d.getFullYear() == viewYear && d.getDate() == viewDayOfWeek});
+               chart.addSeries({
+                   name: category,
+                   data: chartData,
+                   zoneAxis: 'x',
+                   events: {
+                       show: function () {
+                           setTimeout(function(){
+                               notTrigger = true;
+                               $(chart.series).each(function(index, series){
+                                   if(series.name === 'Overall Total')
+                                       this.setVisible(false, false);
+                               });
+                               chart.redraw();
+                               notTrigger = false;
+                           }, 1);
+                       }
+                   },
+                   stack: 'male'
+               }, false);
+           });
+
+           chart.addSeries({
+               name: 'Overall Total',
+               data: sumDataPoints,
+               color: 'black',
+               index: -1,
+               zoneAxis: 'x',
+               events: {
+                   hide: function () {
+                       if(notTrigger)
+                           return;
+                       setTimeout(function(){
+                           $(chart.series).each(function(index, series){
+                               if(series.name !== 'Overall Total')
+                                   this.setVisible(true, true);
+                           });
+                           chart.redraw();
+                       }, 1);
+                   },
+                   show: function () {
+                       setTimeout(function(){
+                           $(chart.series).each(function(index, series){
+                               if(series.name !== 'Overall Total')
+                                   this.setVisible(false, false);
+                           });
+                           chart.redraw();
+                       }, 1);
+                   }
+               }
+           }, false).setVisible(true,true);
+
+           chart.setSubtitle({
+               text: name + ' - ' + fullData[name].length + ' Data Entries'
+           });
+
+           chart.redraw();
+           chart.hideLoading();
+        }
+
+        function viewChart(timeMode, viewMode, reloadData=true)
+        {
+           if(chart) {
+               chart.destroy();
+               $('.highcharts-data-table').remove();
+           }
+
+           $("#siteSelector").html('');
+           $('#warning-message').html('');
+
+           chartCustomConfig = {timeFormat: '%d %b %Y', xAxisTitle: 'Time', viewType: viewMode};
+           switch (timeMode) {
+               case 'hourly':
+                   chartCustomConfig.timeFormat = '%l%P %A %Y';
+                   break;
+               case 'daily':
+                   chartCustomConfig.timeFormat = '%d %b %Y';
+                   $('#warning-message').html('Daily data only includes Tessitura and Artifax data, visits reported by site managers are not included.');
+                   break;
+               case 'weekly':
+                   chartCustomConfig.timeFormat = '%d %b %Y';
+                   chartCustomConfig.xAxisTitle = 'Time (Start Date of the Week)';
+                   $('#warning-message').html('Weekly data only includes Tessitura and Artifax data, visits reported by site managers are not included.');
+                   break;
+               case 'monthly':
+                  chartCustomConfig.timeFormat = '%b %Y';
+                  break;
+               case 'quarterly':
+                  chartCustomConfig.timeFormat = 'Q%q FY%fy';
+                  chartCustomConfig.xAxisTitle = 'Time (Fiscal Quarter)';
+                  break;
+               case 'yearly':
+                  chartCustomConfig.timeFormat = 'FY%fy';
+                  chartCustomConfig.xAxisTitle = 'Time (Fiscal Year)';
+                  break;
+           }
+
+           createChart(chartCustomConfig);
+           chart.showLoading('<div class="my-auto"><img src="{{ url_for('static', filename='assets/img/Loading_icon.gif') }}"><h3>Loading Data...</h3></div');
+
+           if(!reloadData && Object.keys(rawData).length !== 0)
+           {
+               addData(rawData);
+           }
+           else
+           {
+               $.getJSON("{{ url_for('chart.attendance', mode="") }}" + timeMode, addData);
+           }
+        }
+
+        function addData(data) {
+           rawData = data;
+           fullData = {};
+
+           let first_site = "";
+
+           $.each(data, function (index, val) {
+               let site = val.site;
+               if(first_site === "")
+                   first_site = site;
+               if(!fullData[site])
+               {
+                   sites.push(site);
+                   fullData[site] = [];
+                   var r = $('<option/>').attr({
+                       value: site,
+                   }).html(site);
+                   $("#siteSelector").append(r);
+               }
+               fullData[val.site].push(val);
+           });
+
+           viewSite(first_site, 2017, 1);
+        }
+
+        viewChart('hourly', 'column');
+
+        function createChart(config) {
+            Highcharts.dateFormats = {
+                q: function (timestamp) {
+                    let date = new Date(timestamp),
+                    quarter = (Math.floor(date.getUTCMonth() / 3) + 1) - 2;
+                    if(quarter <= 0)
+                        quarter += 4;
+                    return quarter;
+                },
+                fy: function (timestamp) {
+                    let date = new Date(timestamp);
+                    return date.getUTCFullYear() + 1;
+                },
+                A: function (timestamp) {
+                    let date = new Date(timestamp).getDate();
+                    return $('#daySelector option[value=' + date + ']').text();
+                }
+            };
+
+           chart = Highcharts.chart('chart', {
+               chart: {
+                   zoomType: 'x',
+                   type: config.viewType,
+               },
+
+               title: {
+                   text: 'MNHS Hourly Attendance Chart'
+               },
+
+               subtitle: {
+                   text: 'Loading'
+               },
+
+               yAxis: {
+                   title: {
+                       text: 'Average Count'
+                   }
+               },
+               plotOptions: {
+                   series: {
+                       marker: {
+                           enabled: false
+                       }
+                   },
+                    column: {
+                        stacking: 'normal'
+                    }
+               },
+
+               tooltip: {
+                   shared:true,
+                   crosshairs:true,
+                   valueDecimals: 0,
+                   xDateFormat: config.timeFormat,
+               },
+
+               xAxis: {
+                   type: 'datetime',
+                   title: {
+                       text: config.xAxisTitle
+                   },
+               },
+
+               legend: {
+                   align: 'center',
+                   borderWidth: 0
+               },
+
+               series: [],
+
+               exporting: {
+                   showTable: true,
+                   csv:{
+                       dateFormat: config.timeFormat,
+                       itemDelimiter: ';'
+                   },
+               },
+           });
+        }
+
+        function onSelectorChanged()
+        {
+            let day = $('#daySelector').val();
+            let year = $('#yearSelector').val();
+            let site = $('#siteSelector').val();
+            viewSite(site, year, day);
+        }
+
+        $("#siteSelector").change(function(){
+            onSelectorChanged();
+        });
+        $("#daySelector").change(function(){
+            onSelectorChanged();
+        });
+        $("#yearSelector").change(function(){
+            onSelectorChanged();
+        });
+    </script>
 {% endblock %}
 {% block script %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
-        $('#datetimepicker1').flatpickr();
-        $('#datetimepicker2').flatpickr();
-    </script>
+
 {% endblock %}

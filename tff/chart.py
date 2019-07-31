@@ -3,8 +3,9 @@ from google.cloud import bigquery
 
 blueprint = Blueprint('chart', __name__)
 
-project_name = 'mnhs-dw-prod'
+project_name = 'mnhs-dw-test'
 query_tables = {
+    'hourly': '{}.dw.visits_hourly_view'.format(project_name),
     'yearly': '{}.dw.visits_yearly_full_padded_view'.format(project_name),
     'quarterly': '{}.dw.visits_quarterly_full_padded_view'.format(project_name),
     'monthly': '{}.dw.visits_monthly_full_padded_view'.format(project_name),
@@ -32,16 +33,21 @@ def attendance(mode):
             data['site'] = row.site_name
             data['category'] = row.category_name
             data['count'] = row.count
-            if(mode == "yearly"):
+            if mode == "yearly":
                 data['date'] = row.year_start
-            if (mode == "quarterly"):
+            if mode == "quarterly":
                 data['date'] = row.quarter_start
-            if (mode == "monthly"):
+            if mode == "monthly":
                 data['date'] = row.month_start
-            if (mode == "weekly"):
+            if mode == "weekly":
                 data['date'] = row.week_start
-            if (mode == "daily"):
+            if mode == "daily":
                 data['date'] = row.date
+            if mode == "hourly":
+                data['year'] = row.year
+                data['dayofweek'] = row.dayofweek
+                data['hour'] = row.hour
+
             total.append(data)
 
         return jsonify(total)
