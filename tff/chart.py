@@ -5,7 +5,7 @@ blueprint = Blueprint('chart', __name__)
 
 project_name = 'mnhs-dw-test'
 query_tables = {
-    'hourly': '{}.dw.visits_hourly_view'.format(project_name),
+    'hourly': '{}.dw.visits_hourly_full_padded_view'.format(project_name),
     'yearly': '{}.dw.visits_yearly_full_padded_view'.format(project_name),
     'quarterly': '{}.dw.visits_quarterly_full_padded_view'.format(project_name),
     'monthly': '{}.dw.visits_monthly_full_padded_view'.format(project_name),

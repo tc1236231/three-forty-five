@@ -81,7 +81,7 @@
                {
                    categoryData[category] = [];
                }
-               let entryDate = new Date(dataEntry.year, 1, dataEntry.dayofweek, dataEntry.hour);
+               let entryDate = new Date(Date.UTC(dataEntry.year, 1, dataEntry.dayofweek, dataEntry.hour));
                let entryDateTime = entryDate.getTime();
                if(!sumData[entryDateTime])
                {
