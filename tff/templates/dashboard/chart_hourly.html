@@ -57,6 +57,9 @@
             </div>
         </div>
     </div>
+    <div class="row text-danger mt-3">
+        <h6 class="col-12 text-center" id="warning-message"></h6>
+    </div>
     <div class="p-1">
         <div id="chart" class="col-12" style="height: 550px;"></div>
     </div>
@@ -182,6 +185,7 @@
            switch (timeMode) {
                case 'hourly':
                    chartCustomConfig.timeFormat = '%l%P %A %Y';
+                   $('#warning-message').html('Hourly data only includes Tessitura data from 9am-5pm.');
                    break;
                case 'daily':
                    chartCustomConfig.timeFormat = '%d %b %Y';
