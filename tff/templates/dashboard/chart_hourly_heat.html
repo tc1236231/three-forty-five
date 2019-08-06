@@ -1,14 +1,17 @@
 {% extends "dashboard/base.html" %}
 
 {% block extra_head_scripts %}
-  <script src="https://code.highcharts.com/highcharts.js"></script>
-  <script src="https://code.highcharts.com/modules/boost.js"></script>
-  <script src="https://code.highcharts.com/modules/exporting.js"></script>
-  <script src="https://code.highcharts.com/modules/export-data.js"></script>
-  <link href="{{ url_for('static', filename='highcharts-data-table.css') }}" rel="stylesheet" />
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/heatmap.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/data.js"></script>
+    <script src="https://code.highcharts.com/modules/boost-canvas.js"></script>
+    <script src="https://code.highcharts.com/modules/boost.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <link href="{{ url_for('static', filename='highcharts-data-table.css') }}" rel="stylesheet" />
 {% endblock %}
 
-{% block subtitle %}Hourly Attendance Dashboard{% endblock %}
+{% block subtitle %}Hourly Attendance Dashboard (Heat Map){% endblock %}
 
 {% block main %}
     <div class="row">
@@ -23,24 +26,6 @@
     <div class="row">
         <div class="col-2 my-auto">
           <label for="siteSelector">Please select a time frame:</label>
-        </div>
-        <div class="my-auto">
-            <label for="siteSelector">Day Of Week:</label>
-        </div>
-        <div class="col-2 my-auto">
-            <div class="form-group">
-                <div class='input-group'>
-                  <select class="form-control" id="daySelector">
-                      <option value="1">Sunday</option>
-                      <option value="2">Monday</option>
-                      <option value="3">Tuesday</option>
-                      <option value="4">Wednesday</option>
-                      <option value="5">Thursday</option>
-                      <option value="6">Friday</option>
-                      <option value="7">Saturday</option>
-                  </select>
-                </div>
-            </div>
         </div>
         <div class="my-auto">
             <label for="siteSelector">Calendar Year:</label>
@@ -70,21 +55,15 @@
         var fullData = {};
         var notTrigger = false;
 
-        function viewSite(name, viewYear, viewDayOfWeek)
+        function viewSite(name, viewYear)
         {
            while(chart.series.length > 0)
                chart.series[0].remove(true);
 
            let maxTime = 0;
-           let categoryData = {};
            let sumData = {};
            $.each(fullData[name], function (index, dataEntry) {
-               let category = dataEntry.category;
-               if(!categoryData[category])
-               {
-                   categoryData[category] = [];
-               }
-               let entryDate = new Date(Date.UTC(dataEntry.year, 1, dataEntry.dayofweek, dataEntry.hour));
+               let entryDate = new Date(Date.UTC(dataEntry.year, dataEntry.month, dataEntry.day, dataEntry.hour));
                let entryDateTime = entryDate.getTime();
                if(!sumData[entryDateTime])
                {
@@ -96,23 +75,41 @@
                }
                if(entryDateTime > maxTime)
                    maxTime = entryDateTime;
-               categoryData[category].push([entryDateTime, parseFloat((dataEntry.count).toFixed(2))]);
            });
 
-           $.each(categoryData, function (category, dataEntry) {
-               dataEntry.sort(function (a, b) {
-                   return a[0] - b[0]
-               });
-               let chartData = dataEntry.filter(ent => {let d = new Date(); d.setTime(ent[0]); return d.getFullYear() == viewYear && d.getDate() == viewDayOfWeek});
-               chart.addSeries({
-                   name: category,
-                   data: chartData,
-                   zoneAxis: 'x',
-               }, false);
+           let sumDataPoints = [];
+           $.each(sumData, function (entryDateTime, count) {
+               sumDataPoints.push([parseInt(entryDateTime),new Date(parseInt(entryDateTime)).getUTCHours(),count]);
            });
+           sumDataPoints.sort(function (a, b) {
+               return a[0] - b[0]
+           });
+           sumDataPoints = sumDataPoints.filter(ent => {let d = new Date(); d.setTime(ent[0]); return d.getFullYear() == viewYear});
+            let keyArray = sumDataPoints.map(function(item) { return item[2]; });
+            keyArray.sort(function (a, b) {
+                return a-b;
+            });
+            let quantile_y = d3.quantile(keyArray, 0.95);
+
+            chart.colorAxis[0].update({
+                min: 0,
+                max: quantile_y
+            });
+
+           chart.addSeries({
+                boostThreshold: 100,
+                borderWidth: 0,
+                nullColor: '#EFEFEF',
+                colsize: 24 * 50e5, // one day
+                tooltip: {
+                  headerFormat: 'Attendance<br/>',
+                  pointFormat: '{point.x:%e %b, %Y} {point.y}:00: <b>{point.value}</b>'
+                },
+               data: sumDataPoints,
+           }, false);
 
            chart.setSubtitle({
-               text: name + ' - ' + fullData[name].length + ' Data Entries'
+               text: name + ' - ' + fullData[name].length + ' Data Entries',
            });
 
            chart.redraw();
@@ -131,6 +128,10 @@
 
            chartCustomConfig = {timeFormat: '%d %b %Y', xAxisTitle: 'Time', viewType: viewMode};
            switch (timeMode) {
+               case 'hourly_heat':
+                   chartCustomConfig.timeFormat = '%d %b %Y';
+                   $('#warning-message').html('Hourly data only includes Tessitura data from 9am-5pm.');
+                   break;
                case 'hourly':
                    chartCustomConfig.timeFormat = '%l%P %A %Y';
                    $('#warning-message').html('Hourly data only includes Tessitura data from 9am-5pm.');
@@ -192,10 +193,10 @@
                fullData[val.site].push(val);
            });
 
-           viewSite(first_site, 2017, 1);
+           viewSite(first_site, 2017);
         }
 
-        viewChart('hourly', 'column');
+        viewChart('hourly_heat', 'column');
 
         function createChart(config) {
             Highcharts.dateFormats = {
@@ -217,13 +218,18 @@
             };
 
            chart = Highcharts.chart('chart', {
-               chart: {
-                   zoomType: 'x',
-                   type: config.viewType,
-               },
+                chart: {
+                    type: 'heatmap',
+                    margin: [60, 10, 80, 50],
+                    zoomType: 'xy',
+                },
+
+                boost: {
+                    useGPUTranslations: true
+                },
 
                title: {
-                   text: 'MNHS Hourly Attendance Chart'
+                   text: 'MNHS Hourly Attendance Heat Map (Daily Program/Admission Non-Member + Member)'
                },
 
                subtitle: {
@@ -232,15 +238,30 @@
 
                yAxis: {
                    title: {
-                       text: 'Average Count'
-                   }
+                       text: 'Hour'
+                   },
+                    min: 9,
+                    max: 17,
+                    reversed: true
                },
+
+                colorAxis: {
+                    minColor: '#f7f9fe',
+                    maxColor: '#c4463a',
+                    startOnTick: false,
+                    endOnTick: false,
+                    min: 0,
+                },
+
                plotOptions: {
                    series: {
                        marker: {
                            enabled: false
                        }
                    },
+                    column: {
+                        stacking: 'normal'
+                    }
                },
 
                tooltip: {
@@ -252,11 +273,8 @@
 
                xAxis: {
                    type: 'datetime',
-                   title: {
-                       text: config.xAxisTitle
-                   },
                     dateTimeLabelFormats: {
-                        hour: '%l%P'
+                        day: '%d %b %Y'
                     }
                },
 
@@ -279,23 +297,16 @@
 
         function onSelectorChanged()
         {
-            let day = $('#daySelector').val();
             let year = $('#yearSelector').val();
             let site = $('#siteSelector').val();
-            viewSite(site, year, day);
+            viewSite(site, year);
         }
 
         $("#siteSelector").change(function(){
-            onSelectorChanged();
-        });
-        $("#daySelector").change(function(){
             onSelectorChanged();
         });
         $("#yearSelector").change(function(){
             onSelectorChanged();
         });
     </script>
-{% endblock %}
-{% block script %}
-
 {% endblock %}

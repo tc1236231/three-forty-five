@@ -1,5 +1,7 @@
 Flask==1.0.2
 Flask-SQLAlchemy==2.3.2
 Flask-Markdown==0.3
+flask-caching
 requests
 google-cloud-bigquery
+redis==3.1.0

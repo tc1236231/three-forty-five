@@ -7,7 +7,7 @@ from tff.flaskrun import flaskrun
 from flaskext.markdown import Markdown
 from tff.exceptions import InvalidUsage
 
-from tff.db import db
+from tff.db import db, cache
 from tff.database import init_db
 from tff import blog, chart, dashboard
 
@@ -18,6 +18,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "mnhssecretkey")
 
 db.init_app(app)
+cache.init_app(app)
 init_db(app)
 
 Markdown(app)

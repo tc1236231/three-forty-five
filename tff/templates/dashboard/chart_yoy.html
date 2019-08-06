@@ -28,8 +28,10 @@
 
     {% include "dashboard/components/userguide.html" %}
 
-  <div id="chart" class="col-16" style="height: 550px;"></div>
-  
+  <div class="p-1">
+      <div id="chart" class="col-12" style="height: 550px;"></div>
+  </div>
+
   <script>
    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug',
                    'Sep', 'Oct', 'Nov', 'Dec', ];
@@ -66,6 +68,7 @@
 
 
    function readVisitData(rawVisitData) {
+       visitData = {};
        $.each(rawVisitData, (_, record) => {
            if (!visitData[record.site]) {
                visitData[record.site] = {};
@@ -89,24 +92,27 @@
    }
 
    function addSiteTotals() {
-       $.each(visitData, (_, siteData) => {
+       $.each(visitData, (siteName, siteData) => {
            if (!siteData['Totals']) {
                siteData['Totals'] = {};
            }
 
-           $.each(siteData, (_, categoryData) => {
-               $.each(categoryData, (fy, fyData) => {
-                   if (!siteData['Totals'][fy]) {
-                       siteData['Totals'][fy] = [];
-                   }
-                   $.each(fyData, (i, record) => {
-                       if (!siteData['Totals'][fy][i]) {
-                           siteData['Totals'][fy][i] = [record[0], 0];
+           $.each(siteData, (categoryName, categoryData) => {
+               if(categoryName !== "Totals")
+               {
+                   $.each(categoryData, (fy, fyData) => {
+                       if (!siteData['Totals'][fy]) {
+                           siteData['Totals'][fy] = [];
                        }
-                       
-                       siteData['Totals'][fy][i][1] += record[1];
+                       $.each(fyData, (i, record) => {
+                           if (!siteData['Totals'][fy][i]) {
+                               siteData['Totals'][fy][i] = [record[0], 0];
+                           }
+
+                           siteData['Totals'][fy][i][1] += record[1];
+                       });
                    });
-               });
+               }
            });
        });
    }

@@ -1,11 +1,14 @@
 from flask import Blueprint, render_template, jsonify, Response
 from google.cloud import bigquery
 
+from tff.db import cache
+
 blueprint = Blueprint('chart', __name__)
 
 project_name = 'mnhs-dw-test'
 query_tables = {
-    'hourly': '{}.dw.visits_hourly_full_padded_view'.format(project_name),
+    'hourly_heat': '{}.dw.visits_hourly_heat_full_padded_view'.format(project_name),
+    'hourly': '{}.dw.visits_hourly_full_padded_view_new'.format(project_name),
     'yearly': '{}.dw.visits_yearly_full_padded_view'.format(project_name),
     'quarterly': '{}.dw.visits_quarterly_full_padded_view'.format(project_name),
     'monthly': '{}.dw.visits_monthly_full_padded_view'.format(project_name),
@@ -15,6 +18,7 @@ query_tables = {
 
 
 @blueprint.route('/api/attendance/data/<string:mode>')
+@cache.cached(timeout=600)
 def attendance(mode):
     client = bigquery.Client()
 
@@ -31,21 +35,31 @@ def attendance(mode):
         for row in rows:
             data = {}
             data['site'] = row.site_name
-            data['category'] = row.category_name
             data['count'] = row.count
             if mode == "yearly":
                 data['date'] = row.year_start
+                data['category'] = row.category_name
             if mode == "quarterly":
                 data['date'] = row.quarter_start
+                data['category'] = row.category_name
             if mode == "monthly":
                 data['date'] = row.month_start
+                data['category'] = row.category_name
             if mode == "weekly":
                 data['date'] = row.week_start
+                data['category'] = row.category_name
             if mode == "daily":
                 data['date'] = row.date
+                data['category'] = row.category_name
             if mode == "hourly":
                 data['year'] = row.year
                 data['dayofweek'] = row.dayofweek
+                data['hour'] = row.hour
+                data['category'] = row.category_name
+            if mode == "hourly_heat":
+                data['year'] = row.year
+                data['month'] = row.month
+                data['day'] = row.day
                 data['hour'] = row.hour
 
             total.append(data)
@@ -53,4 +67,3 @@ def attendance(mode):
         return jsonify(total)
     except Exception as e:
         return jsonify('Error: ' + str(e)), 500
-

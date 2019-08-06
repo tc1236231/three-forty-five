@@ -22,3 +22,10 @@ def hourly():
     return render_template(
         '/dashboard/chart_hourly.html'
     )
+
+
+@blueprint.route('/dashboard/hourly_heat')
+def hourly_heat():
+    return render_template(
+        '/dashboard/chart_hourly_heat.html'
+    )
