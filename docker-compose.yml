@@ -5,3 +5,7 @@ services:
   tff:
     build: .
     restart: always
+  redis:
+    build:
+      context: .
+      dockerfile: Dockerfile_redis

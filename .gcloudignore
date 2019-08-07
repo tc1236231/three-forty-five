@@ -23,5 +23,5 @@ __pycache__/
 # Ignored by the build system
 /setup.cfg
 
-Dockerfile
+Dockerfile*
 docker-*.yml

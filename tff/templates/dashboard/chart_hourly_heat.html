@@ -63,7 +63,7 @@
            let maxTime = 0;
            let sumData = {};
            $.each(fullData[name], function (index, dataEntry) {
-               let entryDate = new Date(Date.UTC(dataEntry.year, dataEntry.month, dataEntry.day, dataEntry.hour));
+               let entryDate = new Date(Date.UTC(dataEntry.year, dataEntry.month-1, dataEntry.day, dataEntry.hour));
                let entryDateTime = entryDate.getTime();
                if(!sumData[entryDateTime])
                {
