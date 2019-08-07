@@ -104,11 +104,32 @@
                    return a[0] - b[0]
                });
                let chartData = dataEntry.filter(ent => {let d = new Date(); d.setTime(ent[0]); return d.getFullYear() == viewYear && d.getDate() == viewDayOfWeek});
-               chart.addSeries({
-                   name: category,
-                   data: chartData,
-                   zoneAxis: 'x',
-               }, false);
+               if(category.includes("Overall"))
+               {
+                    chart.addSeries({
+                        type: "spline",
+                        name: category,
+                        data: chartData,
+                        zoneAxis: 'x',
+                        color: Highcharts.getOptions().colors[3],
+                        lineWidth: 4,
+                        marker: {
+                            enabled: true,
+                          lineWidth: 2,
+                          lineColor: Highcharts.getOptions().colors[3],
+                          fillColor: 'white'
+                        }
+                    }, false);
+               }
+               else
+               {
+                   chart.addSeries({
+                       type: "column",
+                       name: category,
+                       data: chartData,
+                       zoneAxis: 'x',
+                   }, false);
+               }
            });
 
            chart.setSubtitle({
