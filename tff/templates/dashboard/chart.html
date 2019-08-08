@@ -423,7 +423,12 @@
        }
        else
        {
-           $.getJSON("{{ url_for('chart.attendance', mode="") }}" + timeMode, addData);
+           $.getJSON("{{ url_for('chart.attendance', mode="") }}" + timeMode, function(results) {
+               if(timeMode === $('#timeSelector').val())
+               {
+                   addData(results);
+               }
+           });
        }
    }
 
