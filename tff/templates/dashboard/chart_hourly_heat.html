@@ -41,6 +41,14 @@
                 </div>
             </div>
         </div>
+        <div class="col-2 my-auto">
+            <label for="siteSelector">Quantile Percentage</label>
+            <input id="quantile" type="range" min="0" max="100" value="95">
+        </div>
+        <div class="col-2 my-auto">
+            <label for="siteSelector">Color Distribution</label>
+            <input id="color" type="range" min="0" max="100" value="50">
+        </div>
     </div>
     <div class="row text-danger mt-3">
         <h6 class="col-12 text-center" id="warning-message"></h6>
@@ -54,6 +62,7 @@
         var rawData = {};
         var fullData = {};
         var notTrigger = false;
+        var keyArray = [];
 
         function viewSite(name, viewYear)
         {
@@ -85,7 +94,7 @@
                return a[0] - b[0]
            });
            sumDataPoints = sumDataPoints.filter(ent => {let d = new Date(); d.setTime(ent[0]); return d.getFullYear() == viewYear});
-            let keyArray = sumDataPoints.map(function(item) { return item[2]; });
+            keyArray = sumDataPoints.map(function(item) { return item[2]; });
             keyArray.sort(function (a, b) {
                 return a-b;
             });
@@ -100,7 +109,7 @@
                 boostThreshold: 100,
                 borderWidth: 0,
                 nullColor: '#EFEFEF',
-                colsize: 24 * 50e5, // one day
+                colsize: 9 * 144e5, // one day
                 tooltip: {
                   headerFormat: 'Attendance<br/>',
                   pointFormat: '{point.x:%e %b, %Y} {point.y}:00: <b>{point.value}</b>'
@@ -130,7 +139,7 @@
            switch (timeMode) {
                case 'hourly_heat':
                    chartCustomConfig.timeFormat = '%d %b %Y';
-                   $('#warning-message').html('Hourly data only includes Tessitura data from 9am-5pm.');
+                   $('#warning-message').html('Hourly data only includes Tessitura data from 9am-5pm. (Exclude tickets sold on WEB and BOX)');
                    break;
                case 'hourly':
                    chartCustomConfig.timeFormat = '%l%P %A %Y';
@@ -246,8 +255,11 @@
                },
 
                 colorAxis: {
-                    minColor: '#f7f9fe',
-                    maxColor: '#c4463a',
+                    stops: [
+                        [0, 'White'],
+                        [0.33, 'Yellow'],
+                        [1, 'Red']
+                    ],
                     startOnTick: false,
                     endOnTick: false,
                     min: 0,
@@ -307,6 +319,29 @@
         });
         $("#yearSelector").change(function(){
             onSelectorChanged();
+        });
+        $('input[type=range]').on('input', function () {
+            $(this).trigger('change');
+        });
+        $('#quantile').change(function() {
+            let quantile = 0.95 + 0.005 * ($(this).val() - 95);
+            let quantile_y = d3.quantile(keyArray, quantile);
+
+            chart.colorAxis[0].update({
+                min: 0,
+                max: quantile_y
+            });
+        });
+        $('#color').change(function() {
+            let colordist = 0.33 + 0.01 * ($(this).val() - 50);
+
+            chart.colorAxis[0].update({
+                stops: [
+                    [0, 'White'],
+                    [colordist, 'Yellow'],
+                    [1, 'Red']
+                ]
+            });
         });
     </script>
 {% endblock %}

@@ -8,7 +8,7 @@
   <link href="{{ url_for('static', filename='highcharts-data-table.css') }}" rel="stylesheet" />
 {% endblock %}
 
-{% block subtitle %}Hourly Attendance Dashboard{% endblock %}
+{% block subtitle %}Hourly Attendance Dashboard <a href="{{ url_for('dashboard.hourly_heat') }}"><i class="material-icons">hot_tub</i></a>{% endblock %}
 
 {% block main %}
     <div class="row">
@@ -154,7 +154,7 @@
            switch (timeMode) {
                case 'hourly':
                    chartCustomConfig.timeFormat = '%l%P %A %Y';
-                   $('#warning-message').html('Hourly data only includes Tessitura data from 9am-5pm.');
+                   $('#warning-message').html('Hourly data only includes Tessitura data from 9am-5pm. (Exclude tickets sold on WEB and BOX)');
                    break;
                case 'daily':
                    chartCustomConfig.timeFormat = '%d %b %Y';
