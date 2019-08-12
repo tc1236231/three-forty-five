@@ -14,3 +14,4 @@ env_variables:
   REDIS_HOST: redis-11092.c124.us-central1-1.gce.cloud.redislabs.com
   REDIS_PORT: 11092
   REDIS_PASSWORD: ZabRAKcOiGeu8jE3CJmP6kLsd7sEBEhG
+  DW_PROJECT_ID: mnhs-dw-prod

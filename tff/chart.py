@@ -1,3 +1,5 @@
+import os
+
 from flask import Blueprint, render_template, jsonify, Response
 from google.cloud import bigquery
 
@@ -5,7 +7,7 @@ from tff.db import cache
 
 blueprint = Blueprint('chart', __name__)
 
-project_name = 'mnhs-dw-test'
+project_name = os.getenv('DW_PROJECT_ID')
 query_tables = {
     'hourly_heat': '{}.dw.visits_hourly_heat_full_padded_view'.format(project_name),
     'hourly': '{}.dw.visits_hourly_full_padded_view_new'.format(project_name),
