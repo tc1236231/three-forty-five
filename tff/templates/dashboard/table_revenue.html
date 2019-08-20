@@ -1,10 +1,126 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "dashboard/base.html" %}
+{% block extra_head_scripts %}
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <script src="https://code.highcharts.com/modules/exporting.js"></script>
+  <script src="https://code.highcharts.com/modules/export-data.js"></script>
+  <link href="{{ url_for('static', filename='highcharts-data-table.css') }}" rel="stylesheet" />
+{% endblock %}
 
-</body>
-</html>
+{% block subtitle %}Shopify Daily Revenue Dashboard{% endblock %}a
+
+{% block main %}
+  <div class="row">
+    <div class="col-2 my-auto">
+      <label for="siteSelector">Please select a site:</label>
+    </div>
+    <div class="col-4 my-auto">
+      <select class="form-control site-select" id="siteSelector">
+      </select>
+    </div>
+  </div>
+
+  <div class="p-1">
+      <div id="chart" class="col-12" style="height: 550px;"></div>
+  </div>
+
+  <script>
+     var chart = Highcharts.chart('chart', {
+       chart: {
+           zoomType: 'x',
+           type: 'column'
+       },
+       title: {
+           text: 'Shopify Daily Revenue'
+       },
+       xAxis: {
+           type: 'datetime',
+           title: {
+               text: 'Time'
+           },
+       },
+       yAxis: {
+           title: {
+               text: 'Revenue (USD)'
+           }
+       },
+       tooltip: {
+           shared:true,
+           crosshairs:true,
+           xDateFormat: '%d %b %Y',
+           valuePrefix: '$',
+       },
+       exporting: {
+           showTable: true,
+           csv:{
+               dateFormat: '%d %b %Y',
+               itemDelimiter: ';'
+           },
+       }
+   });
+   chart.showLoading('<div class="my-auto"><img src="{{ url_for('static', filename='assets/img/Loading_icon.gif') }}"><h3>Loading Data...</h3></div');
+
+   var fullData = {};
+   var sites = [];
+
+   function addData(data) {
+       rawData = data;
+       fullData = {};
+
+       //var r = $('<option/>').attr({
+       //    value: 'ALL',
+       //}).html("ALL SITES");
+       //$("#siteSelector").append(r);
+
+       $.each(data, function (index, val) {
+           let site = val.site;
+           if(!fullData[site])
+           {
+               sites.push(site);
+               fullData[site] = [];
+               var r = $('<option/>').attr({
+                   value: site,
+               }).html(site);
+               $("#siteSelector").append(r);
+           }
+           fullData[val.site].push(val);
+       });
+
+       viewSite(Object.keys(fullData)[0]);
+   }
+
+   function viewSite(name) {
+       let maxTime = 0;
+       let presentData = [];
+
+       while(chart.series.length > 0)
+           chart.series[0].remove(true);
+
+       $.each(fullData[name], function (index, dataEntry) {
+            let entryDateTime = new Date(dataEntry.date).getTime();
+
+            if(entryDateTime > maxTime)
+               maxTime = entryDateTime;
+
+            presentData.push([entryDateTime, dataEntry.revenue]);
+       });
+
+       presentData.sort(function (a, b) {
+           return a[0] - b[0]
+       });
+       chart.addSeries({
+           name: 'Revenue (USD)',
+           data: presentData
+       });
+       chart.hideLoading();
+   }
+   
+   $.getJSON("{{ url_for('chart.revenue', mode="daily") }}", rawVisitData => {
+       addData(rawVisitData);
+   });
+
+   $("#siteSelector").change(function(){
+       viewSite(this.value);
+   });
+
+  </script>
+{% endblock %}

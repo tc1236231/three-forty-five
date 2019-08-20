@@ -29,3 +29,10 @@ def hourly_heat():
     return render_template(
         '/dashboard/chart_hourly_heat.html'
     )
+
+
+@blueprint.route('/dashboard/table_revenue')
+def table_revenue():
+    return render_template(
+        '/dashboard/table_revenue.html'
+    )
