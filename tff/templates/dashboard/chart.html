@@ -409,6 +409,7 @@
                         max: 100,
                         startOnTick: false,
                         endOnTick: false,
+                        opposite: true,
                     });
                 }
                 chart.addSeries({
@@ -416,6 +417,13 @@
                     type: 'spline',
                     color: '#08F',
                     yAxis: 'nps-axis',
+                    lineWidth: 0,
+                    marker: {
+                      enabled: true,
+                      lineWidth: 5gi,
+                      lineColor: Highcharts.getOptions().colors[3],
+                      fillColor: 'white'
+                    },
                     data: npsData[site_name]
                 });
             }
