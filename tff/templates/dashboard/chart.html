@@ -59,6 +59,7 @@
    var sites = [];
    var rawData = {};
    var fullData = {};
+   var dataTimeMode = "";
    var notTrigger = false;
 
    function viewAll()
@@ -354,7 +355,7 @@
                        return;
                    setTimeout(function(){
                        $(chart.series).each(function(index, series){
-                           if(series.name !== 'Overall Total')
+                           if(series.name !== 'Overall Total' && series.name !== 'Net Promoter Score')
                                this.setVisible(true, true);
                        });
                        chart.redraw();
@@ -363,7 +364,7 @@
                show: function () {
                    setTimeout(function(){
                        $(chart.series).each(function(index, series){
-                           if(series.name !== 'Overall Total')
+                           if(series.name !== 'Overall Total' && series.name !== 'Net Promoter Score')
                                this.setVisible(false, false);
                        });
                        chart.redraw();
@@ -376,8 +377,49 @@
            text: name + ' - ' + fullData[name].length + ' Data Entries'
        });
 
+      if(dataTimeMode === "monthly")
+          addNPS(name);
+
        chart.redraw();
        chart.hideLoading();
+   }
+   
+   function addNPS(site_name) {
+        $.getJSON("{{ url_for('chart.nps', mode="") }}" + dataTimeMode, function(results) {
+            if(site_name === $('#siteSelector').val())
+            {
+                let npsData = {};
+                $.each(results, function (index, val) {
+                   let site = val.site;
+                   if(!npsData[site])
+                   {
+                       npsData[site] = [];
+                   }
+                   npsData[val.site].push({x: new Date(val.date).getTime(), y: val.nps, sample_size: val.sample_size});
+                });
+                if ( !chart.get( 'nps-axis' ) ) {
+                    chart.addAxis({ // Secondary yAxis
+                        id: 'nps-axis',
+                        title: {
+                            text: 'Net Promoter Score'
+                        },
+                        lineWidth: 2,
+                        lineColor: '#08F',
+                        min: -100,
+                        max: 100,
+                        startOnTick: false,
+                        endOnTick: false,
+                    });
+                }
+                chart.addSeries({
+                    name: 'Net Promoter Score',
+                    type: 'spline',
+                    color: '#08F',
+                    yAxis: 'nps-axis',
+                    data: npsData[site_name]
+                });
+            }
+        });
    }
 
    function viewChart(timeMode, viewMode, reloadData=true)
@@ -426,13 +468,13 @@
            $.getJSON("{{ url_for('chart.attendance', mode="") }}" + timeMode, function(results) {
                if(timeMode === $('#timeSelector').val())
                {
-                   addData(results);
+                   addData(results, timeMode);
                }
            });
        }
    }
 
-   function addData(data) {
+   function addData(data, timeMode) {
        rawData = data;
        fullData = {};
 
@@ -454,6 +496,8 @@
            }
            fullData[val.site].push(val);
        });
+
+       dataTimeMode = timeMode;
 
        viewSite('ALL');
    }

@@ -11,6 +11,26 @@
 {% block subtitle %}Hourly Attendance Dashboard <a href="{{ url_for('dashboard.hourly_heat') }}"><i class="material-icons">hot_tub</i></a>{% endblock %}
 
 {% block main %}
+    <div id="myModal" class="modal fade" role="dialog">
+        <div class="modal-dialog modal-lg">
+            <!-- Modal content-->
+            <div class="modal-content">
+              <div class="modal-header">
+                  <h4 class="modal-title text-capitalize">WARNING</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+              </div>
+              <div class="modal-body">
+                  <h4 class="text-danger">
+                      Averages shown may be misleading; they were taken over the only <span name="sample_size"></span> <span name="day_of_week"></span>(s) in <span name="year"></span>
+                      where there were ticket sales at <span name="site_name"></span>.
+                  </h4>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Discard</button>
+              </div>
+            </div>
+        </div>
+    </div>
     <div class="row">
         <div class="col-2 my-auto">
           <label for="siteSelector">Please select a site:</label>
@@ -69,9 +89,14 @@
         var rawData = {};
         var fullData = {};
         var notTrigger = false;
+        var dataLoading = true;
+        const SampleSizeThreshold = 10;
 
         function viewSite(name, viewYear, viewDayOfWeek)
         {
+            if (dataLoading)
+                return;
+
            while(chart.series.length > 0)
                chart.series[0].remove(true);
 
@@ -96,16 +121,21 @@
                }
                if(entryDateTime > maxTime)
                    maxTime = entryDateTime;
-               categoryData[category].push([entryDateTime, parseFloat((dataEntry.count).toFixed(2))]);
+               categoryData[category].push({x: entryDateTime, y: parseFloat((dataEntry.count).toFixed(2)), sampleSize: dataEntry.total});
            });
 
            $.each(categoryData, function (category, dataEntry) {
                dataEntry.sort(function (a, b) {
-                   return a[0] - b[0]
+                   return a.x - b.x
                });
-               let chartData = dataEntry.filter(ent => {let d = new Date(); d.setTime(ent[0]); return d.getFullYear() == viewYear && d.getDate() == viewDayOfWeek});
+               let chartData = dataEntry.filter(ent => {let d = new Date(); d.setTime(ent.x); return d.getFullYear() == viewYear && d.getDate() == viewDayOfWeek});
                if(category.includes("Overall"))
                {
+                    if(chartData && chartData.length > 0 && chartData.filter(ent => {return ent.sampleSize <= SampleSizeThreshold}).length > 0)
+                    {
+                        $("#myModal").find('span[name="sample_size"]').html(chartData.filter(ent => {return ent.sampleSize <= SampleSizeThreshold})[0].sampleSize / 2);
+                        $("#myModal").modal();
+                    }
                     chart.addSeries({
                         type: "spline",
                         name: category,
@@ -114,7 +144,7 @@
                         color: Highcharts.getOptions().colors[3],
                         lineWidth: 4,
                         marker: {
-                            enabled: true,
+                          enabled: true,
                           lineWidth: 2,
                           lineColor: Highcharts.getOptions().colors[3],
                           fillColor: 'white'
@@ -187,6 +217,7 @@
            }
            else
            {
+               dataLoading = true;
                $.getJSON("{{ url_for('chart.attendance', mode="") }}" + timeMode, addData);
            }
         }
@@ -212,6 +243,8 @@
                }
                fullData[val.site].push(val);
            });
+
+           dataLoading = false;
 
            viewSite(first_site, 2017, 1);
         }
@@ -269,6 +302,21 @@
                    crosshairs:true,
                    valueDecimals: 0,
                    xDateFormat: config.timeFormat,
+                   formatter: function(tooltip) {
+                        return this.points.reduce(function (s, point) {
+                            let sampleSizeStr = "";
+                            if(point.series.name.includes('Overall')) {
+                                sampleSizeStr = 'Sample Size: ' + point.point.sampleSize;
+                                if (point.point.sampleSize <= SampleSizeThreshold)
+                                    sampleSizeStr = '<br/><b style="color: red">' + sampleSizeStr + '</b>'
+                                else
+                                    sampleSizeStr = '<br/>' + sampleSizeStr;
+                            }
+
+                            return s + '<br/><span style="color:' + point.series.color + '">\u25CF</span> ' + point.series.name + ': ' +
+                                    point.y + sampleSizeStr;
+                        }, '<b>' + Highcharts.dateFormat(config.timeFormat, this.x) + '</b>');
+                   }
                },
 
                xAxis: {
@@ -278,7 +326,7 @@
                    },
                     dateTimeLabelFormats: {
                         hour: '%l%P'
-                    }
+                    },
                },
 
                legend: {
@@ -315,7 +363,16 @@
         $("#yearSelector").change(function(){
             onSelectorChanged();
         });
+        $('#myModal').on('show.bs.modal', function(e) {
+            let day = $("#daySelector option:selected").text();
+            let year = $("#yearSelector option:selected").text();
+            let site = $("#siteSelector option:selected").text();
+            $(e.currentTarget).find('span[name="day_of_week"]').html(day);
+            $(e.currentTarget).find('span[name="year"]').html(year);
+            $(e.currentTarget).find('span[name="site_name"]').html(site);
+        });
     </script>
+</div>
 {% endblock %}
 {% block script %}
 

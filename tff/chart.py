@@ -20,7 +20,7 @@ query_tables = {
 
 
 @blueprint.route('/api/attendance/data/<string:mode>')
-@cache.cached(timeout=600)
+#@cache.cached(timeout=600)
 def attendance(mode):
     client = bigquery.Client()
 
@@ -58,6 +58,7 @@ def attendance(mode):
                 data['dayofweek'] = row.dayofweek
                 data['hour'] = row.hour
                 data['category'] = row.category_name
+                data['total'] = row.total
             if mode == "hourly_heat":
                 data['year'] = row.year
                 data['month'] = row.month
@@ -91,6 +92,35 @@ def revenue(mode):
             data['site'] = row.site_name
             data['date'] = row.date
             data['revenue'] = row.revenue
+
+            total.append(data)
+
+        return jsonify(total)
+    except Exception as e:
+        return jsonify('Error: ' + str(e)), 500
+
+
+@blueprint.route('/api/nps/data/<string:mode>')
+@cache.cached(timeout=600)
+def nps(mode):
+    client = bigquery.Client()
+
+    query_table = '{}.interim.nps_monthly_view'.format(project_name)
+
+    QUERY = (
+        'SELECT * FROM `{}` '.format(query_table)
+         )
+
+    try:
+        query_job = client.query(QUERY)  # API request
+        rows = query_job.result()  # Waits for query to finish
+        total = []
+        for row in rows:
+            data = {}
+            data['site'] = row.site_name
+            data['date'] = row.month_start
+            data['nps'] = row.nps
+            data['sample_size'] = row.sample_size
 
             total.append(data)
 
