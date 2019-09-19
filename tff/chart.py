@@ -127,3 +127,35 @@ def nps(mode):
         return jsonify(total)
     except Exception as e:
         return jsonify('Error: ' + str(e)), 500
+
+
+@blueprint.route('/api/weather/data/<string:mode>')
+@cache.cached(timeout=600)
+def weather(mode):
+    client = bigquery.Client()
+
+    query_table = '{}.lz.weather_view'.format(project_name)
+
+    QUERY = (
+        'SELECT * FROM `{}` '.format(query_table)
+         )
+
+    try:
+        query_job = client.query(QUERY)  # API request
+        rows = query_job.result()  # Waits for query to finish
+        total = []
+        for row in rows:
+            data = {}
+            data['site'] = row.site_name
+            data['date'] = row.date
+            data['prcp'] = row.prcp
+            data['snow'] = row.snow
+            data['tmax'] = row.tmax
+            data['tmin'] = row.tmin
+            data['wtxx'] = row.wtxx
+
+            total.append(data)
+
+        return jsonify(total)
+    except Exception as e:
+        return jsonify('Error: ' + str(e)), 500

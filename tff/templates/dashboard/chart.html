@@ -61,9 +61,11 @@
    var fullData = {};
    var dataTimeMode = "";
    var notTrigger = false;
+   var currentWeatherData = [];
 
    function viewAll()
    {
+       if(chart.get('nps-axis')) chart.get('nps-axis').remove(true);
        let maxTime = 0;
        let siteData = {};
        let totalData = {};
@@ -276,7 +278,9 @@
            {
                categoryData[category] = [];
            }
-           let entryDateTime = new Date(dataEntry.date).getTime();
+           let entryDateTime = new Date(dataEntry.date); // FIXME: temp fix for missing using UTC time for localtime and day light saving issue
+           entryDateTime.setHours(entryDateTime.getHours() + 5);
+           entryDateTime = entryDateTime.getTime();
            if(!sumData[entryDateTime])
            {
                sumData[entryDateTime] = dataEntry.count;
@@ -379,9 +383,37 @@
 
       if(dataTimeMode === "monthly")
           addNPS(name);
+      if(dataTimeMode === "daily")
+          addWeather(name);
 
        chart.redraw();
        chart.hideLoading();
+   }
+   
+   function addWeather(site_name) {
+        $.getJSON("{{ url_for('chart.weather', mode="") }}" + dataTimeMode, function(results) {
+            if(site_name === $('#siteSelector').val())
+            {
+                let weatherData = {};
+                $.each(results, function (index, val) {
+                   let site = val.site;
+                   if(!weatherData[site])
+                   {
+                       weatherData[site] = [];
+                   }
+                   weatherData[val.site].push({x: new Date(val.date).getTime(), y: 0, prcp: val.prcp, snow: val.snow, tmax: val.tmax, tmin: val.tmin, wtxx: val.wtxx});
+                });
+                currentWeatherData = weatherData[site_name];
+                chart.addSeries({
+                    id: 'weather',
+                    name: 'Weather',
+                    lineWidth: 0,
+                    data: weatherData[site_name],
+                    visible: false,
+                    showInLegend: false,
+                });
+            }
+        });
    }
    
    function addNPS(site_name) {
@@ -403,8 +435,8 @@
                         title: {
                             text: 'Net Promoter Score'
                         },
-                        lineWidth: 2,
-                        lineColor: '#08F',
+                        lineWidth: 1,
+                        lineColor: Highcharts.getOptions().colors[0],
                         min: -100,
                         max: 100,
                         startOnTick: false,
@@ -413,15 +445,16 @@
                     });
                 }
                 chart.addSeries({
+                    id: 'nps',
                     name: 'Net Promoter Score',
                     type: 'spline',
-                    color: '#08F',
+                    color: Highcharts.getOptions().colors[0],
                     yAxis: 'nps-axis',
                     lineWidth: 0,
                     marker: {
                       enabled: true,
                       lineWidth: 5,
-                      lineColor: Highcharts.getOptions().colors[3],
+                      lineColor: Highcharts.getOptions().colors[0],
                       fillColor: 'white'
                     },
                     data: npsData[site_name]
@@ -533,6 +566,10 @@
                type: config.viewType,
            },
 
+           time: {
+               useUTC: false,
+           },
+
            title: {
                text: 'MNHS Attendance Chart'
            },
@@ -559,6 +596,37 @@
                crosshairs:true,
                valueDecimals: 0,
                xDateFormat: config.timeFormat,
+              formatter: function(tooltip) {
+                    return this.points.reduce(function (s, point) {
+                        let sampleSizeStr = "";
+                        let weatherStr = "";
+
+                        if(chart.get('weather') && point.series.name.includes('Total') && currentWeatherData) {
+                            Highcharts.each(currentWeatherData, function(wx_point) {
+                              if (point.x === wx_point.x) {
+                                weatherStr = '<br/><span style="color: blue">\u25CF</span> ' + 'Prcp' + ': ' +
+                                wx_point.prcp;
+                                weatherStr += '<br/><span style="color: grey">\u25CF</span> ' + 'Snow' + ': ' +
+                                wx_point.snow;
+                                weatherStr += '<br/><span style="color: red">\u25CF</span> ' + 'TMax' + ': ' +
+                                wx_point.tmax + '\u2103';
+                                weatherStr += '<br/><span style="color: green">\u25CF</span> ' + 'TMin' + ': ' +
+                                wx_point.tmin + '\u2103';
+                                weatherStr += '<br/><span style="color: orange">\u25CF</span> ' + 'WTXX' + ': ' +
+                                wx_point.wtxx;
+                              }
+                            });
+                        }
+
+                        if(point.series.name.includes('Net Promoter Score')) {
+                            sampleSizeStr = '<br/><span style="color:' + point.series.color + '">\u25CF</span> ' + 'Net Promoter Sample Size' + ': ' +
+                                point.point.sample_size;
+                        }
+
+                        return s + '<br/><span style="color:' + point.series.color + '">\u25CF</span> ' + point.series.name + ': ' +
+                                point.y + sampleSizeStr + weatherStr;
+                    }, '<b>' + Highcharts.dateFormat(config.timeFormat, this.x) + '</b>');
+               }
            },
 
            xAxis: {
