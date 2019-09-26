@@ -401,7 +401,7 @@
                    {
                        weatherData[site] = [];
                    }
-                   weatherData[val.site].push({x: new Date(val.date).getTime(), y: 0, prcp: val.prcp, snow: val.snow, tmax: val.tmax, tmin: val.tmin, wtxx: val.wtxx});
+                   weatherData[val.site].push({x: new Date(val.date).getTime(), y: 0, prcp: val.prcp, snow: val.snow, tmax: val.tmax, tmin: val.tmin});
                 });
                 currentWeatherData = weatherData[site_name];
                 chart.addSeries({
@@ -612,8 +612,6 @@
                                 wx_point.tmax + '\u2103';
                                 weatherStr += '<br/><span style="color: green">\u25CF</span> ' + 'TMin' + ': ' +
                                 wx_point.tmin + '\u2103';
-                                weatherStr += '<br/><span style="color: orange">\u25CF</span> ' + 'WTXX' + ': ' +
-                                wx_point.wtxx;
                               }
                             });
                         }

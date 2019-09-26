@@ -152,7 +152,6 @@ def weather(mode):
             data['snow'] = row.snow
             data['tmax'] = row.tmax
             data['tmin'] = row.tmin
-            data['wtxx'] = row.wtxx
 
             total.append(data)
 
