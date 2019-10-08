@@ -51,13 +51,13 @@
             <div class="form-group">
                 <div class='input-group'>
                   <select class="form-control" id="daySelector">
-                      <option value="1">Sunday</option>
-                      <option value="2">Monday</option>
-                      <option value="3">Tuesday</option>
-                      <option value="4">Wednesday</option>
-                      <option value="5">Thursday</option>
-                      <option value="6">Friday</option>
-                      <option value="7">Saturday</option>
+                      <option value="7">Sunday</option>
+                      <option value="1">Monday</option>
+                      <option value="2">Tuesday</option>
+                      <option value="3">Wednesday</option>
+                      <option value="4">Thursday</option>
+                      <option value="5">Friday</option>
+                      <option value="6">Saturday</option>
                   </select>
                 </div>
             </div>
@@ -306,7 +306,7 @@
                         return this.points.reduce(function (s, point) {
                             let sampleSizeStr = "";
                             if(point.series.name.includes('Overall')) {
-                                sampleSizeStr = 'Sample Size: ' + point.point.sampleSize;
+                                sampleSizeStr = 'Observations: ' + (point.point.sampleSize / 2) + ' Open Days';
                                 if (point.point.sampleSize <= SampleSizeThreshold)
                                     sampleSizeStr = '<br/><b style="color: red">' + sampleSizeStr + '</b>'
                                 else

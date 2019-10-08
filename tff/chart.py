@@ -10,7 +10,7 @@ blueprint = Blueprint('chart', __name__)
 project_name = os.getenv('DW_PROJECT_ID')
 query_tables = {
     'hourly_heat': '{}.dw.visits_hourly_heat_full_padded_view'.format(project_name),
-    'hourly': '{}.dw.visits_hourly_full_padded_view_new'.format(project_name),
+    'hourly': '{}.dw.attendance_hourly_view'.format(project_name),
     'yearly': '{}.dw.visits_yearly_view'.format(project_name),
     'quarterly': '{}.dw.visits_quarterly_view'.format(project_name),
     'monthly': '{}.dw.visits_monthly_view'.format(project_name),
@@ -20,7 +20,7 @@ query_tables = {
 
 
 @blueprint.route('/api/attendance/data/<string:mode>')
-#@cache.cached(timeout=600)
+@cache.cached(timeout=600)
 def attendance(mode):
     client = bigquery.Client()
 
@@ -55,10 +55,10 @@ def attendance(mode):
                 data['category'] = row.category_name
             if mode == "hourly":
                 data['year'] = row.year
-                data['dayofweek'] = row.dayofweek
+                data['dayofweek'] = row.wday
                 data['hour'] = row.hour
-                data['category'] = row.category_name
-                data['total'] = row.total
+                data['category'] = row.attendance_category_name
+                data['total'] = row.sample_size
             if mode == "hourly_heat":
                 data['year'] = row.year
                 data['month'] = row.month
