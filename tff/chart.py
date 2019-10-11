@@ -10,6 +10,7 @@ blueprint = Blueprint('chart', __name__)
 project_name = os.getenv('DW_PROJECT_ID')
 query_tables = {
     'hourly_heat': '{}.dw.visits_hourly_heat_full_padded_view'.format(project_name),
+    'hourly_holiday': '{}.dw.attendance_hourly_holidays_view'.format(project_name),
     'hourly': '{}.dw.attendance_hourly_view'.format(project_name),
     'yearly': '{}.dw.visits_yearly_view'.format(project_name),
     'quarterly': '{}.dw.visits_quarterly_view'.format(project_name),
@@ -56,6 +57,12 @@ def attendance(mode):
             if mode == "hourly":
                 data['year'] = row.year
                 data['dayofweek'] = row.wday
+                data['hour'] = row.hour
+                data['category'] = row.attendance_category_name
+                data['total'] = row.sample_size
+            if mode == "hourly_holiday":
+                data['year'] = row.year
+                data['holiday'] = row.holiday
                 data['hour'] = row.hour
                 data['category'] = row.attendance_category_name
                 data['total'] = row.sample_size

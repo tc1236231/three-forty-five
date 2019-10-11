@@ -8,29 +8,9 @@
   <link href="{{ url_for('static', filename='highcharts-data-table.css') }}" rel="stylesheet" />
 {% endblock %}
 
-{% block subtitle %}Hourly Attendance Dashboard <a href="{{ url_for('dashboard.hourly_heat') }}"><i class="material-icons">hot_tub</i></a>{% endblock %}
+{% block subtitle %}Hourly Attendance Dashboard (Holiday Mode) <a href="{{ url_for('dashboard.hourly_heat') }}"><i class="material-icons">hot_tub</i></a>{% endblock %}
 
 {% block main %}
-    <div id="myModal" class="modal fade" role="dialog">
-        <div class="modal-dialog modal-lg">
-            <!-- Modal content-->
-            <div class="modal-content">
-              <div class="modal-header">
-                  <h4 class="modal-title text-capitalize">WARNING</h4>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-              </div>
-              <div class="modal-body">
-                  <h4 class="text-danger">
-                      Averages shown may be misleading; they were taken over the only <span name="sample_size"></span> <span name="day_of_week"></span>(s) in <span name="year"></span>
-                      where there were ticket sales at <span name="site_name"></span>.
-                  </h4>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              </div>
-            </div>
-        </div>
-    </div>
     <div class="row">
         <div class="col-2 my-auto">
           <label for="siteSelector">Please select a site:</label>
@@ -45,19 +25,12 @@
           <label for="siteSelector">Please select a time frame:</label>
         </div>
         <div class="my-auto">
-            <label for="siteSelector">Day Of Week:</label>
+            <label for="siteSelector">Holiday:</label>
         </div>
         <div class="col-2 my-auto">
             <div class="form-group">
                 <div class='input-group'>
                   <select class="form-control" id="daySelector">
-                      <option value="7">Sunday</option>
-                      <option value="1">Monday</option>
-                      <option value="2">Tuesday</option>
-                      <option value="3">Wednesday</option>
-                      <option value="4">Thursday</option>
-                      <option value="5">Friday</option>
-                      <option value="6">Saturday</option>
                   </select>
                 </div>
             </div>
@@ -76,9 +49,6 @@
                 </div>
             </div>
         </div>
-        <div class="col-2 my-auto mx-1">
-            <a class="btn btn-info text-dark" href="{{ url_for('dashboard.hourly_holiday') }}">Holiday Mode</a>
-        </div>
     </div>
     <div class="row text-danger mt-3">
         <h6 class="col-12 text-center" id="warning-message"></h6>
@@ -93,9 +63,8 @@
         var fullData = {};
         var notTrigger = false;
         var dataLoading = true;
-        const SampleSizeThreshold = 10;
 
-        function viewSite(name, viewYear, viewDayOfWeek)
+        function viewSite(name, viewYear, viewHolidayName="")
         {
             if (dataLoading)
                 return;
@@ -105,31 +74,41 @@
 
            let maxTime = 0;
            let categoryData = {};
+           let holidayList = [];
            $.each(fullData[name], function (index, dataEntry) {
                let category = dataEntry.category;
                if(!categoryData[category])
                {
                    categoryData[category] = [];
                }
-               let entryDate = new Date(Date.UTC(dataEntry.year, 1, dataEntry.dayofweek, dataEntry.hour));
+               if(!holidayList.includes(dataEntry.holiday))
+               {
+                   holidayList.push(dataEntry.holiday);
+               }
+               let entryDate = new Date(Date.UTC(dataEntry.year, 1, 1, dataEntry.hour));
                let entryDateTime = entryDate.getTime();
                if(entryDateTime > maxTime)
                    maxTime = entryDateTime;
-               categoryData[category].push({x: entryDateTime, y: parseFloat((dataEntry.count).toFixed(2)), sampleSize: dataEntry.total});
+               categoryData[category].push({x: entryDateTime, y: parseFloat((dataEntry.count).toFixed(2)), sampleSize: dataEntry.total, holiday: dataEntry.holiday});
            });
+
+           if(viewHolidayName === "")
+           {
+               viewHolidayName = holidayList[0];
+           }
+           $('#daySelector').empty();
+           $.each(holidayList, function (index, holiday) {
+                $('#daySelector').append('<option value="'+holiday+'">'+holiday+'</option>');
+           });
+           $("#daySelector").val(viewHolidayName);
 
            $.each(categoryData, function (category, dataEntry) {
                dataEntry.sort(function (a, b) {
                    return a.x - b.x
                });
-               let chartData = dataEntry.filter(ent => {let d = new Date(); d.setTime(ent.x); return d.getFullYear() == viewYear && d.getDate() == viewDayOfWeek});
+               let chartData = dataEntry.filter(ent => {let d = new Date(); d.setTime(ent.x); return d.getFullYear() == viewYear && ent.holiday == viewHolidayName});
                if(category.includes("Overall"))
                {
-                    if(chartData && chartData.length > 0 && chartData.filter(ent => {return ent.sampleSize <= SampleSizeThreshold}).length > 0)
-                    {
-                        $("#myModal").find('span[name="sample_size"]').html(chartData.filter(ent => {return ent.sampleSize <= SampleSizeThreshold})[0].sampleSize / 2);
-                        $("#myModal").modal();
-                    }
                     chart.addSeries({
                         type: "spline",
                         name: category,
@@ -176,7 +155,7 @@
 
            chartCustomConfig = {timeFormat: '%d %b %Y', xAxisTitle: 'Time', viewType: viewMode};
            switch (timeMode) {
-               case 'hourly':
+               case 'hourly_holiday':
                    chartCustomConfig.timeFormat = '%l%P %A %Y';
                    $('#warning-message').html('Hourly data only includes Tessitura data from 9am-5pm. (Exclude tickets sold on WEB and BOX)');
                    break;
@@ -240,10 +219,10 @@
 
            dataLoading = false;
 
-           viewSite(first_site, 2017, 1);
+           viewSite(first_site, 2017);
         }
 
-        viewChart('hourly', 'column');
+        viewChart('hourly_holiday', 'column');
 
         function createChart(config) {
             Highcharts.dateFormats = {
@@ -299,17 +278,10 @@
                    formatter: function(tooltip) {
                         return this.points.reduce(function (s, point) {
                             let sampleSizeStr = "";
-                            if(point.series.name.includes('Overall')) {
-                                sampleSizeStr = 'Observations: ' + (point.point.sampleSize / 2) + ' Open Days';
-                                if (point.point.sampleSize <= SampleSizeThreshold)
-                                    sampleSizeStr = '<br/><b style="color: red">' + sampleSizeStr + '</b>'
-                                else
-                                    sampleSizeStr = '<br/>' + sampleSizeStr;
-                            }
 
                             return s + '<br/><span style="color:' + point.series.color + '">\u25CF</span> ' + point.series.name + ': ' +
                                     point.y + sampleSizeStr;
-                        }, '<b>' + Highcharts.dateFormat(config.timeFormat, this.x) + '</b>');
+                        }, '<b>' + Highcharts.dateFormat(config.timeFormat, this.x) + ' ' + this.points[0].point.holiday + '</b>');
                    }
                },
 
@@ -342,10 +314,10 @@
 
         function onSelectorChanged()
         {
-            let day = $('#daySelector').val();
+            let hday = $('#daySelector').val();
             let year = $('#yearSelector').val();
             let site = $('#siteSelector').val();
-            viewSite(site, year, day);
+            viewSite(site, year, hday);
         }
 
         $("#siteSelector").change(function(){
@@ -356,14 +328,6 @@
         });
         $("#yearSelector").change(function(){
             onSelectorChanged();
-        });
-        $('#myModal').on('show.bs.modal', function(e) {
-            let day = $("#daySelector option:selected").text();
-            let year = $("#yearSelector option:selected").text();
-            let site = $("#siteSelector option:selected").text();
-            $(e.currentTarget).find('span[name="day_of_week"]').html(day);
-            $(e.currentTarget).find('span[name="year"]').html(year);
-            $(e.currentTarget).find('span[name="site_name"]').html(site);
         });
     </script>
 </div>

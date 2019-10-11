@@ -31,6 +31,13 @@ def hourly_heat():
     )
 
 
+@blueprint.route('/dashboard/hourly_holiday')
+def hourly_holiday():
+    return render_template(
+        '/dashboard/chart_hourly_holiday.html'
+    )
+
+
 @blueprint.route('/dashboard/table_revenue')
 def table_revenue():
     return render_template(
