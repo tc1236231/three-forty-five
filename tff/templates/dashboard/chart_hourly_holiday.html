@@ -107,7 +107,7 @@
                    return a.x - b.x
                });
                let chartData = dataEntry.filter(ent => {let d = new Date(); d.setTime(ent.x); return d.getFullYear() == viewYear && ent.holiday == viewHolidayName});
-               if(category.includes("Overall"))
+               if(category.includes("Sum"))
                {
                     chart.addSeries({
                         type: "spline",
