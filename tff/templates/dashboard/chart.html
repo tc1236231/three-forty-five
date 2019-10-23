@@ -278,8 +278,7 @@
            {
                categoryData[category] = [];
            }
-           let entryDateTime = new Date(dataEntry.date); // FIXME: temp fix for missing using UTC time for localtime and day light saving issue
-           entryDateTime.setHours(entryDateTime.getHours() + 5);
+           let entryDateTime = new Date(dataEntry.date);
            entryDateTime = entryDateTime.getTime();
            if(!sumData[entryDateTime])
            {

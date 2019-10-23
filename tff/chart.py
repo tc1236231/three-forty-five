@@ -9,14 +9,14 @@ blueprint = Blueprint('chart', __name__)
 
 project_name = os.getenv('DW_PROJECT_ID')
 query_tables = {
-    'hourly_heat': '{}.dw.visits_hourly_heat_full_padded_view'.format(project_name),
-    'hourly_holiday': '{}.dw.attendance_hourly_holidays_view'.format(project_name),
-    'hourly': '{}.dw.attendance_hourly_view'.format(project_name),
-    'yearly': '{}.dw.visits_yearly_view'.format(project_name),
-    'quarterly': '{}.dw.visits_quarterly_view'.format(project_name),
-    'monthly': '{}.dw.visits_monthly_view'.format(project_name),
-    'weekly': '{}.dw.visits_weekly_view'.format(project_name),
-    'daily': '{}.dw.visits_daily_view'.format(project_name),
+    'hourly_heat': '{}.tff.attendance_hourly_heat_map_view'.format(project_name),
+    'hourly_holiday': '{}.tff.attendance_hourly_holidays_view'.format(project_name),
+    'hourly': '{}.tff.attendance_hourly_view'.format(project_name),
+    'yearly': '{}.tff.attendance_yearly_view'.format(project_name),
+    'quarterly': '{}.tff.attendance_quarterly_view'.format(project_name),
+    'monthly': '{}.tff.attendance_monthly_view'.format(project_name),
+    'weekly': '{}.tff.attendance_weekly_view'.format(project_name),
+    'daily': '{}.tff.attendance_daily_view'.format(project_name),
 }
 
 
@@ -84,7 +84,7 @@ def attendance(mode):
 def revenue(mode):
     client = bigquery.Client()
 
-    query_table = '{}.dw.shopify_daily_revenue_view'.format(project_name)
+    query_table = '{}.tff.shopify_daily_revenue_view'.format(project_name)
 
     QUERY = (
         'SELECT * FROM `{}` '.format(query_table)
@@ -112,7 +112,7 @@ def revenue(mode):
 def nps(mode):
     client = bigquery.Client()
 
-    query_table = '{}.interim.nps_monthly_view'.format(project_name)
+    query_table = '{}.tff.nps_monthly_view'.format(project_name)
 
     QUERY = (
         'SELECT * FROM `{}` '.format(query_table)
@@ -141,7 +141,7 @@ def nps(mode):
 def weather(mode):
     client = bigquery.Client()
 
-    query_table = '{}.lz.weather_view'.format(project_name)
+    query_table = '{}.tff.weather_view'.format(project_name)
 
     QUERY = (
         'SELECT * FROM `{}` '.format(query_table)
