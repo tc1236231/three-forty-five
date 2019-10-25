@@ -46,5 +46,10 @@ def register_errorhandlers(app):
 register_errorhandlers(app)
 
 
+@app.template_filter()
+def env_override(value, key):
+    return os.getenv(key, value)
+
+
 if __name__ == '__main__':
     flaskrun(app)
