@@ -1,0 +1,32 @@
+image: google/cloud-sdk:alpine
+
+stages:
+  - deploy
+
+deploy_production:
+  stage: deploy
+  environment: Production
+  dependencies:
+    - build
+  only:
+  - master
+  script:
+  - echo $SERVICE_ACCOUNT > /tmp/$CI_PIPELINE_ID.json
+  - gcloud auth activate-service-account --key-file /tmp/$CI_PIPELINE_ID.json
+  - gcloud --quiet --project $PROJECT_ID app deploy app.yaml
+  after_script:
+  - rm /tmp/$CI_PIPELINE_ID.json
+
+deploy_staging:
+  stage: deploy
+  environment: Staging
+  dependencies:
+    - build
+  only:
+  - stage
+  script:
+  - echo $SERVICE_ACCOUNT > /tmp/$CI_PIPELINE_ID.json
+  - gcloud auth activate-service-account --key-file /tmp/$CI_PIPELINE_ID.json
+  - gcloud --quiet --project $PROJECT_ID app deploy app_stage.yaml
+  after_script:
+  - rm /tmp/$CI_PIPELINE_ID.json
