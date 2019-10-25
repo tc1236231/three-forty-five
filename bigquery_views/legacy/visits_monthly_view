@@ -1,0 +1,9 @@
+select
+  s.name AS site_name,
+  CONCAT(c.group, " ", c.type) AS category_name,
+  v.month_start AS month_start,
+  v.count AS count
+from `mnhs-dw-prod`.dw.monthly_visits as v
+join `mnhs-dw-prod`.dw.sites as s on v.site_uuid = s.uuid
+join `mnhs-dw-prod`.dw.visit_categories as c on v.category_uuid = c.uuid
+ORDER BY site_name, category_name, month_start

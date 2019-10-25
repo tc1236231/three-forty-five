@@ -1,0 +1,44 @@
+WITH tess AS (select
+  s.name AS site_name,
+  CONCAT(c.group, " ", c.type) AS category_name,
+  EXTRACT(YEAR FROM v.order_dt) AS year,
+  EXTRACT(HOUR FROM v.order_dt) AS hour,
+  EXTRACT(DAYOFWEEK FROM v.order_dt) AS dayofweek,
+  EXTRACT(WEEK FROM v.order_dt) AS week,
+  COUNT(*) AS count
+from `mnhs-dw-prod`.lz.tessitura_visits as v
+join `mnhs-dw-prod`.dw.sites as s on v.site_uuid = s.uuid
+join `mnhs-dw-prod`.dw.visit_categories as c on v.category_uuid = c.uuid
+WHERE UPPER(v.mos) NOT LIKE "%WEB%" AND UPPER(v.mos) NOT LIKE "%BOX%"
+GROUP BY site_name, category_name, year, week, dayofweek, hour
+ORDER BY site_name, category_name, year, week, dayofweek, hour),
+closed AS (SELECT
+site_name,
+year,
+week,
+dayofweek,
+SUM(count) <= 0 AS is_closed
+FROM tess
+GROUP BY site_name,year,week,dayofweek
+ORDER BY site_name, year, week, dayofweek),
+hours AS (
+SELECT 1 as dummy, *
+FROM UNNEST([9,10,11,12,13,14,15,16,17])
+AS hour
+),
+fulllist AS (
+  SELECT b.site_name, b.category_name, b.year, b.week, b.dayofweek, a.hour
+  FROM hours a
+  LEFT JOIN (SELECT 1 as dummy, site_name, category_name, year, week, dayofweek FROM tess GROUP BY site_name, category_name, year, week, dayofweek) AS b
+  ON a.dummy = b.dummy
+  ORDER BY site_name, category_name, year, week, dayofweek, hour
+),
+padded_tess AS (
+SELECT a.site_name,a.category_name,a.year,a.week,a.dayofweek,a.hour,COALESCE(b.count,0) AS count FROM fulllist AS a
+LEFT JOIN tess AS b
+ON a.site_name = b.site_name AND a.category_name = b.category_name AND a.year=b.year AND a.week=b.week AND a.dayofweek=b.dayofweek AND a.hour=b.hour
+ORDER BY site_name, category_name, year, week, dayofweek, hour
+)
+
+SELECT site_name,category_name,year,dayofweek,hour,ROUND(AVG(count)) AS count FROM padded_tess GROUP BY site_name,category_name,year,dayofweek,hour
+ORDER BY site_name,category_name,year,dayofweek,hour
