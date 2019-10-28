@@ -555,7 +555,7 @@
             },
             fy: function (timestamp) {
                 var date = new Date(timestamp);
-                return date.getUTCFullYear() + 1;
+                return date.getUTCFullYear() + (date.getUTCMonth() >= 6);;
             },
         };
 
