@@ -123,7 +123,7 @@
                    return a.x - b.x
                });
                let chartData = dataEntry.filter(ent => {let d = new Date(); d.setTime(ent.x); return d.getFullYear() == viewYear && d.getDate() == viewDayOfWeek});
-               if(category.includes("Overall"))
+               if(category.includes("Sum"))
                {
                     if(chartData && chartData.length > 0 && chartData.filter(ent => {return ent.sampleSize <= SampleSizeThreshold}).length > 0)
                     {
@@ -299,7 +299,7 @@
                    formatter: function(tooltip) {
                         return this.points.reduce(function (s, point) {
                             let sampleSizeStr = "";
-                            if(point.series.name.includes('Overall')) {
+                            if(point.series.name.includes('Sum')) {
                                 sampleSizeStr = 'Observations: ' + (point.point.sampleSize / 2) + ' Open Days';
                                 if (point.point.sampleSize <= SampleSizeThreshold)
                                     sampleSizeStr = '<br/><b style="color: red">' + sampleSizeStr + '</b>'
