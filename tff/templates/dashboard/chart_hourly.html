@@ -256,7 +256,7 @@
                 },
                 fy: function (timestamp) {
                     let date = new Date(timestamp);
-                    return date.getUTCFullYear() + 1;
+                    return date.getUTCFullYear() + (date.getUTCMonth() >= 6);;
                 },
                 A: function (timestamp) {
                     let date = new Date(timestamp).getDate();

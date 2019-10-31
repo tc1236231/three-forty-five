@@ -377,7 +377,7 @@
        }, false).setVisible(true,true);
 
        chart.setSubtitle({
-           text: name + ' - ' + fullData[name].length + ' Data Entries'
+           text: name
        });
 
       if(dataTimeMode === "monthly")
@@ -475,11 +475,11 @@
        chartCustomConfig = {timeFormat: '%b %Y', xAxisTitle: 'Time', viewType: viewMode};
        switch (timeMode) {
            case 'daily':
-               chartCustomConfig.timeFormat = '%d %b %Y';
+               chartCustomConfig.timeFormat = '%a, %d %b %Y';
                $('#warning-message').html('Daily data only includes Tessitura and Artifax data, visits reported by site managers are not included.');
                break;
            case 'weekly':
-               chartCustomConfig.timeFormat = '%d %b %Y';
+               chartCustomConfig.timeFormat = '%a, %d %b %Y';
                chartCustomConfig.xAxisTitle = 'Time (Start Date of the Week)';
                $('#warning-message').html('Weekly data only includes Tessitura and Artifax data, visits reported by site managers are not included.');
                break;
@@ -544,6 +544,11 @@
 
    viewChart('monthly', 'line');
 
+    function cToF(celsius)
+    {
+        return Math.round(celsius * 9 / 5 + 32);
+    }
+
    function createChart(config) {
         Highcharts.dateFormats = {
             q: function (timestamp) {
@@ -554,7 +559,7 @@
                 return quarter;
             },
             fy: function (timestamp) {
-                var date = new Date(timestamp);
+                let date = new Date(timestamp);
                 return date.getUTCFullYear() + (date.getUTCMonth() >= 6);;
             },
         };
@@ -603,14 +608,16 @@
                         if(chart.get('weather') && point.series.name.includes('Total') && currentWeatherData) {
                             Highcharts.each(currentWeatherData, function(wx_point) {
                               if (point.x === wx_point.x) {
-                                weatherStr = '<br/><span style="color: blue">\u25CF</span> ' + 'Prcp' + ': ' +
-                                wx_point.prcp;
-                                weatherStr += '<br/><span style="color: grey">\u25CF</span> ' + 'Snow' + ': ' +
-                                wx_point.snow;
-                                weatherStr += '<br/><span style="color: red">\u25CF</span> ' + 'TMax' + ': ' +
-                                wx_point.tmax + '\u2103';
-                                weatherStr += '<br/><span style="color: green">\u25CF</span> ' + 'TMin' + ': ' +
-                                wx_point.tmin + '\u2103';
+                                    let tmax = cToF(wx_point.tmax); // TODO: Temporary fix for unit
+                                    let tmin = cToF(wx_point.tmin);
+                                    weatherStr = '<br/><span style="color: blue">\u25CF</span> ' + 'Prcp' + ': ' +
+                                    wx_point.prcp;
+                                    weatherStr += '<br/><span style="color: grey">\u25CF</span> ' + 'Snow' + ': ' +
+                                    wx_point.snow;
+                                    weatherStr += '<br/><span style="color: red">\u25CF</span> ' + 'TMax' + ': ' +
+                                    tmax + '\u2109';
+                                    weatherStr += '<br/><span style="color: green">\u25CF</span> ' + 'TMin' + ': ' +
+                                    tmin + '\u2109';
                               }
                             });
                         }

@@ -73,6 +73,8 @@
 
    function readVisitData(rawVisitData) {
        visitData = {};
+       let allSitesData = {};
+       visitData['ALL SITES'] = allSitesData;
        $.each(rawVisitData, (_, record) => {
            if (!visitData[record.site]) {
                visitData[record.site] = {};
@@ -82,16 +84,32 @@
            if (!siteData[record.category]) {
                siteData[record.category] = {};
            }
+           if (!allSitesData[record.category]) {
+               allSitesData[record.category] = {};
+           }
+           let allSitesCategoryData = allSitesData[record.category];
            let categoryData = siteData[record.category];
            let data_date = new Date(record.date);
 
-           let fy = data_date.getUTCFullYear() + (data_date.getUTCMonth() >= (7-1));
+           let fy = data_date.getUTCFullYear() + (data_date.getUTCMonth() >= 6);
            if (!categoryData[fy]) {
                categoryData[fy] = [];
            }
+           if (!allSitesCategoryData[fy]) {
+               allSitesCategoryData[fy] = [];
+           }
+           let allSitesYearData = allSitesCategoryData[fy];
+           let currentMonth = MONTHS[data_date.getUTCMonth()];
+           let allSitesEntry = allSitesYearData.find(element => element[0] === currentMonth);
+           if (allSitesEntry) {
+               allSitesEntry[1] += record.count;
+           } else {
+               allSitesYearData.push([currentMonth, record.count]);
+           }
+
            let yearData = categoryData[fy];
            
-           yearData.push([MONTHS[data_date.getUTCMonth()], record.count]);
+           yearData.push([currentMonth, record.count]);
        });
    }
 
@@ -188,7 +206,10 @@
                data: data
            });
        })
-       
+
+       chart.setSubtitle({
+           text: site + ' - ' + category
+       });
    }
    
    // Kick things off
